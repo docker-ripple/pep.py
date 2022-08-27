@@ -5,6 +5,7 @@ import sys
 import time
 import traceback
 from datetime import datetime
+from datetime import timedelta
 
 from common.constants import privileges
 from common.ripple import userUtils
@@ -188,13 +189,10 @@ def handle(tornadoRequest):
         # Check if frozen
         frozen = user_db["frozen"]
 
-        present = datetime.now()
-        readabledate = datetime.utcfromtimestamp(user_db["freezedate"]).strftime(
-            "%d-%m-%Y %H:%M:%S",
-        )
-        date2 = datetime.utcfromtimestamp(user_db["freezedate"]).strftime("%d/%m/%Y")
-        date3 = present.strftime("%d/%m/%Y")
-        passed = date2 < date3
+        expire = datetime.now() - timedelta(days=7)
+        dt = datetime.utcfromtimestamp(user_db["freezedate"])
+        readabledate = dt.strftime("%d-%m-%Y %H:%M:%S")
+        passed = expire > dt
         if frozen and not passed:
             responseToken.enqueue(
                 serverPackets.notification(
