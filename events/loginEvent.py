@@ -188,13 +188,10 @@ def handle(tornadoRequest):
         # Check if frozen
         frozen = user_db["frozen"]
 
-        present = datetime.now()
-        readabledate = datetime.utcfromtimestamp(user_db["freezedate"]).strftime(
-            "%d-%m-%Y %H:%M:%S",
-        )
-        date2 = datetime.utcfromtimestamp(user_db["freezedate"]).strftime("%d/%m/%Y")
-        date3 = present.strftime("%d/%m/%Y")
-        passed = date2 < date3
+        current = datetime.now()
+        expire = datetime.utcfromtimestamp(user_db["freezedate"])
+        readabledate = expire.strftime("%d-%m-%Y %H:%M:%S")
+        passed = current > expire
         if frozen and not passed:
             responseToken.enqueue(
                 serverPackets.notification(
