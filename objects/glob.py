@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from helpers.status_helper import StatusManager
 
 # Consts.
-DATADOG_PREFIX = "peppy"
 BOT_NAME = "RealistikBot"
 
 __version__ = "3.1.0"

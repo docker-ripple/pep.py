@@ -7,8 +7,6 @@ from functools import partial
 from time import localtime
 from time import strftime
 
-import dill
-
 from common.constants import mods
 from logger import log
 
@@ -202,20 +200,6 @@ def strContains(s, w):
     :return: True if `w` is in `s`, otherwise False
     """
     return (" " + w + " ") in (" " + s + " ")
-
-
-def getTotalSize(o):
-    """
-    Get approximate object size using dill
-
-    :param o: object
-    :return: approximate bytes size
-    """
-    try:
-        return len(dill.dumps(o, recurse=True))
-    except:
-        log.error("Error while getting total object size!")
-        return 0
 
 
 def calc_acc(mode, n300, n100, n50, miss, katu, geki):

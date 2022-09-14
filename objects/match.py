@@ -669,7 +669,6 @@ class Match:
             return False
 
         # Get old slot data
-        # oldData = dill.copy(self.slots[oldSlotID])
         oldData = copy.deepcopy(self.slots[oldSlotID])
 
         # Free old slot
