@@ -10,9 +10,9 @@ import tornado.gen
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
+
 from common.db import dbConnector
 from common.redis import pubSub
-
 from handlers import api_delta as deltaApi
 from handlers import apiAerisThing
 from handlers import apiFokabotMessageHandler
@@ -76,7 +76,7 @@ def main():
         # Connect to db and redis
         try:
             log.info("Connecting to MySQL database... ")
-            glob.db = dbConnector.db(
+            glob.db = dbConnector.DatabasePool(
                 glob.config.DB_HOST,
                 glob.config.DB_USERNAME,
                 glob.config.DB_PASSWORD,

@@ -19,7 +19,7 @@ class Config:
     DB_WORKERS: int = 4
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
-    REDIS_DB: str = "0"
+    REDIS_DB: int = 0
     REDIS_PASSWORD: str = ""
     GZIP_LEVEL: int = 6
     THREADS_COUNT: int = 2

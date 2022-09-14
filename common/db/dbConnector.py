@@ -1,13 +1,20 @@
+from __future__ import annotations
+
 import queue
-import MySQLdb
-import MySQLdb.cursors
 import time
+from typing import Any
+from typing import Optional
+
+import MySQLdb.cursors
+
 from logger import log
 
-class worker:
+
+class Worker:
     """
     A single MySQL worker
     """
+
     def __init__(self, connection, temporary=False):
         """
         Initialize a MySQL worker
@@ -17,22 +24,7 @@ class worker:
         """
         self.connection = connection
         self.temporary = temporary
-        log.debug("Created MySQL worker. Temporary: {}".format(self.temporary))
-
-    def ping(self):
-        """
-        Ping MySQL server using this worker.
-
-        :return: True if connected, False if error occured.
-        """
-        c = self.connection.cursor(MySQLdb.cursors.DictCursor)
-        try:
-            c.execute("SELECT 1+1")
-            return True
-        except MySQLdb.Error:
-            return False
-        finally:
-            c.close()
+        log.debug(f"Created MySQL worker. Temporary: {self.temporary}")
 
     def __del__(self):
         """
@@ -42,11 +34,20 @@ class worker:
         """
         self.connection.close()
 
-class connectionsPool:
+
+class ConnectionPool:
     """
     A MySQL workers pool
     """
-    def __init__(self, host, username, password, database, size=128):
+
+    def __init__(
+        self,
+        host: str,
+        username: str,
+        password: str,
+        database: str,
+        size: int = 128,
+    ):
         """
         Initialize a MySQL connections pool
 
@@ -62,7 +63,7 @@ class connectionsPool:
         self.consecutiveEmptyPool = 0
         self.fillPool()
 
-    def newWorker(self, temporary=False):
+    def newWorker(self, temporary: bool = False) -> Worker:
         """
         Create a new worker.
 
@@ -70,15 +71,12 @@ class connectionsPool:
         :return: instance of worker class
         """
         db = MySQLdb.connect(
-            *self.config,
-            autocommit=True,
-            charset="utf8",
-            use_unicode=True
+            *self.config, autocommit=True, charset="utf8", use_unicode=True
         )
-        conn = worker(db, temporary)
+        conn = Worker(db, temporary)
         return conn
 
-    def fillPool(self, newConnections=0):
+    def fillPool(self, newConnections: int = 0) -> None:
         """
         Fill the queue with workers
 
@@ -94,7 +92,7 @@ class connectionsPool:
             if not self.pool.full():
                 self.pool.put_nowait(self.newWorker())
 
-    def getWorker(self, level=0):
+    def getWorker(self) -> Worker:
         """
         Get a MySQL connection worker from the pool.
         If the pool is empty, a new temporary worker is created.
@@ -102,11 +100,6 @@ class connectionsPool:
         :param level: number of failed connection attempts. If > 50, return None
         :return: instance of worker class
         """
-        # Make sure we below 50 retries
-        #log.info("Pool size: {}".format(self.pool.qsize()))
-        if level >= 50:
-            log.warning("Too many failed connection attempts. No MySQL connection available.")
-            return None
 
         try:
             if self.pool.empty():
@@ -119,7 +112,9 @@ class connectionsPool:
 
                 # If the pool is usually empty, expand it
                 if self.consecutiveEmptyPool >= 10:
-                    log.warning("MySQL connections pool is empty. Filling connections pool.")
+                    log.warning(
+                        "MySQL connections pool is empty. Filling connections pool.",
+                    )
                     self.fillPool()
             else:
                 # The pool is not empty. Get worker from the pool
@@ -131,12 +126,12 @@ class connectionsPool:
             # Wait 1 second and try again
             log.warning("Can't connect to MySQL database. Retrying in 1 second...")
             time.sleep(1)
-            return self.getWorker(level=level+1)
+            return self.getWorker()
 
         # Return the connection
         return worker
 
-    def putWorker(self, worker):
+    def putWorker(self, worker: Worker):
         """
         Put the worker back in the pool.
         If the worker is temporary, close the connection
@@ -153,11 +148,20 @@ class connectionsPool:
             # Put the connection in the queue if there's space
             self.pool.put_nowait(worker)
 
-class db:
+
+class DatabasePool:
     """
     A MySQL helper with multiple workers
     """
-    def __init__(self, host, username, password, database, initialSize):
+
+    def __init__(
+        self,
+        host: str,
+        username: str,
+        password: str,
+        database: str,
+        initialSize: int,
+    ):
         """
         Initialize a new MySQL database helper with multiple workers.
         This class is thread safe.
@@ -168,9 +172,9 @@ class db:
         :param database: MySQL database name
         :param initialSize: initial pool size
         """
-        self.pool = connectionsPool(host, username, password, database, initialSize)
+        self.pool = ConnectionPool(host, username, password, database, initialSize)
 
-    def execute(self, query, params = ()):
+    def execute(self, query: str, params: tuple = ()) -> None:
         """
         Executes a query
 
@@ -194,13 +198,12 @@ class db:
             if worker is not None:
                 self.pool.putWorker(worker)
 
-    def fetch(self, query, params = (), _all = False):
+    def fetch(self, query: str, params: tuple = ()) -> Optional[dict[str, Any]]:
         """
         Fetch a single value from db that matches given query
 
         :param query: query to execute. You can bind parameters with %s
         :param params: parameters list. First element replaces first %s and so on
-        :param _all: fetch one or all values. Used internally. Use fetchAll if you want to fetch all values
         """
         cursor = None
         worker = self.pool.getWorker()
@@ -211,10 +214,7 @@ class db:
             cursor = worker.connection.cursor(MySQLdb.cursors.DictCursor)
             cursor.execute(query, params)
             log.debug(query)
-            if _all:
-                return cursor.fetchall()
-            else:
-                return cursor.fetchone()
+            return cursor.fetchone()
         finally:
             # Close the cursor and release worker's lock
             if cursor is not None:
@@ -222,7 +222,7 @@ class db:
             if worker is not None:
                 self.pool.putWorker(worker)
 
-    def fetchAll(self, query, params = ()):
+    def fetchAll(self, query: str, params: tuple = ()) -> list[dict[str, Any]]:
         """
         Fetch all values from db that matche given query.
         Calls self.fetch with all = True.
@@ -230,4 +230,20 @@ class db:
         :param query: query to execute. You can bind parameters with %s
         :param params: parameters list. First element replaces first %s and so on
         """
-        return self.fetch(query, params, True)
+
+        cursor = None
+        worker = self.pool.getWorker()
+        if worker is None:
+            return []
+        try:
+            # Create cursor, execute the query and fetch one/all result(s)
+            cursor = worker.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute(query, params)
+            log.debug(query)
+            return cursor.fetchall()
+        finally:
+            # Close the cursor and release worker's lock
+            if cursor is not None:
+                cursor.close()
+            if worker is not None:
+                self.pool.putWorker(worker)

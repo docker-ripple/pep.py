@@ -10,7 +10,7 @@ from collection.channels import ChannelList
 from collection.matches import MatchList
 from collection.streams import StreamList
 from collection.tokens import TokenList
-from common.db.dbConnector import db as Database
+from common.db.dbConnector import DatabasePool
 from config import conf
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ BOT_NAME = "RealistikBot"
 __version__ = "3.1.0"
 
 application = None
-db: Database = None
+db: DatabasePool = None
 redis: Redis = None
 config = conf
 banchoConf = None
