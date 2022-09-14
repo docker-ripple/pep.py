@@ -124,8 +124,7 @@ class MatchList:
                 except Exception as e:
                     exceptions.append(e)
                     log.error(
-                        "Something wrong happened while disposing a timed out match. Reporting to Sentry when "
-                        "the loop ends.",
+                        "Something wrong happened while disposing a timed out match.",
                     )
 
             # Re-raise exception if needed

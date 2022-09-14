@@ -23,7 +23,7 @@ from common.constants import gameModes
 from common.constants import mods
 from common.constants import privileges
 from common.ripple import userUtils
-from config import conf
+from config import config
 from constants import exceptions
 from constants import matchModModes
 from constants import matchScoringTypes
@@ -305,8 +305,8 @@ def editMap(fro: str, chan: str, message: list[str]) -> str:
             f"the beatmap [https://ussr.pl/beatmaps/{token.tillerino[0]} {map_name}]"
         )
 
-    if conf.NEW_RANKED_WEBHOOK:
-        webhook = DiscordWebhook(url=conf.NEW_RANKED_WEBHOOK)
+    if config.NEW_RANKED_WEBHOOK:
+        webhook = DiscordWebhook(url=config.NEW_RANKED_WEBHOOK)
         embed = DiscordEmbed(description=f"Ranked by {fro}", color=242424)
         embed.set_author(
             name=f"{map_name} was just {status_readable}",

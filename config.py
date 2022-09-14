@@ -24,6 +24,7 @@ class Config:
     GZIP_LEVEL: int = 6
     THREADS_COUNT: int = 2
     NEW_RANKED_WEBHOOK: str = ""
+    USING_CF: bool = True
 
 
 def read_config_json() -> dict[str, Any]:
@@ -71,5 +72,3 @@ def load_config() -> Config:
 
 
 config = load_config()
-
-conf = Config()

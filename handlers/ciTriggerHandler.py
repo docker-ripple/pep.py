@@ -4,8 +4,8 @@ import json
 
 import tornado.gen
 import tornado.web
-from common.web import requestsManager
 
+from common.web import requestsManager
 from constants import exceptions
 from helpers import systemHelper
 from logger import log
@@ -25,7 +25,7 @@ class handler(requestsManager.asyncRequestHandler):
 
             # Check ci key
             key = self.get_argument("k")
-            if key is None or key != glob.conf.config["server"]["cikey"]:
+            if key is None or key != glob.config.config["server"]["cikey"]:
                 raise exceptions.invalidArgumentsException()
 
             log.info("Ci event triggered!!")

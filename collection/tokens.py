@@ -185,8 +185,7 @@ class TokenList:
                     except Exception as e:
                         exceptions.append(e)
                         log.error(
-                            "Something wrong happened while disconnecting a timed out client. Reporting to Sentry "
-                            "when the loop ends.",
+                            "Something wrong happened while disconnecting a timed out client.",
                         )
 
             # Re-raise exceptions if needed

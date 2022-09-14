@@ -5,7 +5,6 @@ import traceback
 
 import tornado.gen
 import tornado.web
-from raven.contrib.tornado import SentryMixin
 
 from logger import log
 from common.web import requestsManager

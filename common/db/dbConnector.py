@@ -189,7 +189,7 @@ class DatabasePool:
         """
         self.pool = ConnectionPool(host, username, password, database, initialSize)
 
-    def execute(self, query: str, params: tuple = ()) -> None:
+    def execute(self, query: str, params: tuple = ()) -> int:
         """
         Executes a query
 
@@ -199,7 +199,7 @@ class DatabasePool:
         cursor = None
         worker = self.pool.getWorker()
         if worker is None:
-            return
+            return 0
         try:
             # Create cursor, execute query and commit
             cursor = worker.connection.cursor(MySQLdb.cursors.DictCursor)

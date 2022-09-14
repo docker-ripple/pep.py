@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-import sys
-import traceback
+from typing import Optional
 
 import tornado.gen
 import tornado.web
-from raven.contrib.tornado import SentryMixin
 from tornado.ioloop import IOLoop
 
+from config import configig
 from logger import log
 from objects import glob
 
 
-class asyncRequestHandler(SentryMixin, tornado.web.RequestHandler):
+class asyncRequestHandler(tornado.web.RequestHandler):
     """
     Tornado asynchronous request handler
     create a class that extends this one (requestHelper.asyncRequestHandler)
@@ -44,21 +43,23 @@ class asyncRequestHandler(SentryMixin, tornado.web.RequestHandler):
             if not self._finished:
                 self.finish()
 
-    def asyncGet(self, *args, **kwargs):
+    def asyncGet(self, *args, **kwargs) -> None:
         self.send_error(405)
 
-    def asyncPost(self, *args, **kwargs):
+    def asyncPost(self, *args, **kwargs) -> None:
         self.send_error(405)
 
-    def getRequestIP(self):
+    def getRequestIP(self) -> Optional[str]:
         """
-        Return CF-Connecting-IP (request IP when under cloudflare, you have to configure nginx to enable that)
-        If that fails, return X-Forwarded-For (request IP when not under Cloudflare)
-        if everything else fails, return remote IP
+        If the server is configured to use Cloudflare, returns the `CF-Connecting-IP` header.
+        Otherwise, returns the `X-Real-IP` header.
 
         :return: Client IP address
         """
-        return self.request.headers.get("X-Real-IP")
+        if not config.USING_CF:
+            return self.request.headers.get("X-Real-IP")
+
+        return self.request.headers.get("CF-Connecting-IP")
 
 
 def runBackground(data, callback):
