@@ -5,7 +5,8 @@ import time
 from typing import Any
 from typing import Optional
 
-import MySQLdb.cursors
+import MySQLdb
+from MySQLdb.connections import Connection
 
 from logger import log
 
@@ -15,7 +16,12 @@ class Worker:
     A single MySQL worker
     """
 
-    def __init__(self, connection, temporary=False):
+    __slots__ = (
+        "connection",
+        "temporary",
+    )
+
+    def __init__(self, connection: Connection, temporary: bool = False) -> None:
         """
         Initialize a MySQL worker
 
@@ -26,7 +32,7 @@ class Worker:
         self.temporary = temporary
         log.debug(f"Created MySQL worker. Temporary: {self.temporary}")
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
         Close connection to the server
 
@@ -40,6 +46,13 @@ class ConnectionPool:
     A MySQL workers pool
     """
 
+    __slots__ = (
+        "config",
+        "maxSize",
+        "pool",
+        "consecutiveEmptyPool",
+    )
+
     def __init__(
         self,
         host: str,
@@ -47,7 +60,7 @@ class ConnectionPool:
         password: str,
         database: str,
         size: int = 128,
-    ):
+    ) -> None:
         """
         Initialize a MySQL connections pool
 
@@ -154,6 +167,8 @@ class DatabasePool:
     A MySQL helper with multiple workers
     """
 
+    __slots__ = ("pool",)
+
     def __init__(
         self,
         host: str,
@@ -161,7 +176,7 @@ class DatabasePool:
         password: str,
         database: str,
         initialSize: int,
-    ):
+    ) -> None:
         """
         Initialize a new MySQL database helper with multiple workers.
         This class is thread safe.
@@ -184,7 +199,7 @@ class DatabasePool:
         cursor = None
         worker = self.pool.getWorker()
         if worker is None:
-            return None
+            return
         try:
             # Create cursor, execute query and commit
             cursor = worker.connection.cursor(MySQLdb.cursors.DictCursor)
