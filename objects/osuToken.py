@@ -9,7 +9,6 @@ from common.constants import actions
 from common.constants import gameModes
 from common.constants import privileges
 from common.ripple import userUtils
-
 from constants import exceptions
 from constants import serverPackets
 from constants.rosuprivs import ADMIN_PRIVS
@@ -36,7 +35,7 @@ class UserToken:
         Create a token object and set userID and token
 
         :param userID: user associated to this token
-        :param token_: 	if passed, set token to that value
+        :param token_:     if passed, set token to that value
                                         if not passed, token will be generated
         :param ip: client ip. optional.
         :param irc: if True, set this token as IRC client. Default: False.

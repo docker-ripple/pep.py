@@ -20,11 +20,11 @@ class listener(threading.Thread):
         }
         ```
         Where handler is:
-        - 	An object of a class that inherits common.redis.generalPubSubHandler.
+        -     An object of a class that inherits common.redis.generalPubSubHandler.
                 You can create custom behaviors for your handlers by overwriting the `handle(self, data)` method,
                 that will be called when that handler receives some data.
 
-        - 	A function *object (not call)* that accepts one argument, that'll be the data received through the channel.
+        -     A function *object (not call)* that accepts one argument, that'll be the data received through the channel.
                 This is useful if you want to make some simple handlers through a lambda, without having to create a class.
         """
         threading.Thread.__init__(self)

@@ -15,14 +15,14 @@ from typing import Optional
 
 import osupyparser
 import requests
+from discord_webhook import DiscordEmbed
+from discord_webhook import DiscordWebhook
+
 from common import generalUtils
 from common.constants import gameModes
 from common.constants import mods
 from common.constants import privileges
 from common.ripple import userUtils
-from discord_webhook import DiscordEmbed
-from discord_webhook import DiscordWebhook
-
 from config import conf
 from constants import exceptions
 from constants import matchModModes
@@ -227,9 +227,9 @@ Must have fro, chan and messages as arguments
 :param fro: username of who triggered the command
 :param chan: channel"(or username, if PM) where the message was sent
 :param message: list containing arguments passed from the message
-				[0] = first argument
-				[1] = second argument
-				. . .
+                [0] = first argument
+                [1] = second argument
+                . . .
 
 return the message or **False** if there's no response by the bot
 TODO: Change False to None, because False doesn't make any sense
@@ -1032,10 +1032,10 @@ def tillerinoLast(fro, chan, message):
 
     data = glob.db.fetch(
         """SELECT beatmaps.song_name as sn, {t}.*,
-		beatmaps.beatmap_id as bid, beatmaps.max_combo as fc
-		FROM {t} LEFT JOIN beatmaps ON beatmaps.beatmap_md5={t}.beatmap_md5
-		LEFT JOIN users ON users.id = {t}.userid WHERE users.id = %s
-		ORDER BY {t}.id DESC LIMIT 1""".format(
+        beatmaps.beatmap_id as bid, beatmaps.max_combo as fc
+        FROM {t} LEFT JOIN beatmaps ON beatmaps.beatmap_md5={t}.beatmap_md5
+        LEFT JOIN users ON users.id = {t}.userid WHERE users.id = %s
+        ORDER BY {t}.id DESC LIMIT 1""".format(
             t=table,
         ),
         [token.userID],

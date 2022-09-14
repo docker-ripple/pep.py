@@ -190,12 +190,12 @@ def getUserStats(userID, gameMode):
     # Get stats
     stats = glob.db.fetch(
         """SELECT
-						ranked_score_{gm} AS rankedScore,
-						avg_accuracy_{gm} AS accuracy,
-						playcount_{gm} AS playcount,
-						total_score_{gm} AS totalScore,
-						pp_{gm} AS pp
-						FROM users_stats WHERE id = %s LIMIT 1""".format(
+                        ranked_score_{gm} AS rankedScore,
+                        avg_accuracy_{gm} AS accuracy,
+                        playcount_{gm} AS playcount,
+                        total_score_{gm} AS totalScore,
+                        pp_{gm} AS pp
+                        FROM users_stats WHERE id = %s LIMIT 1""".format(
             gm=modeForDB,
         ),
         [userID],
@@ -222,12 +222,12 @@ def getUserStatsRx(userID, gameMode):
     if gameMode == 3:
         stats = glob.db.fetch(
             """SELECT
-							ranked_score_{gm} AS rankedScore,
-							avg_accuracy_{gm} AS accuracy,
-							playcount_{gm} AS playcount,
-							total_score_{gm} AS totalScore,
-							pp_{gm} AS pp
-							FROM users_stats WHERE id = %s LIMIT 1""".format(
+                            ranked_score_{gm} AS rankedScore,
+                            avg_accuracy_{gm} AS accuracy,
+                            playcount_{gm} AS playcount,
+                            total_score_{gm} AS totalScore,
+                            pp_{gm} AS pp
+                            FROM users_stats WHERE id = %s LIMIT 1""".format(
                 gm=modeForDB,
             ),
             [userID],
@@ -238,12 +238,12 @@ def getUserStatsRx(userID, gameMode):
         # Get stats
         stats = glob.db.fetch(
             """SELECT
-							ranked_score_{gm} AS rankedScore,
-							avg_accuracy_{gm} AS accuracy,
-							playcount_{gm} AS playcount,
-							total_score_{gm} AS totalScore,
-							pp_{gm} AS pp
-							FROM rx_stats WHERE id = %s LIMIT 1""".format(
+                            ranked_score_{gm} AS rankedScore,
+                            avg_accuracy_{gm} AS accuracy,
+                            playcount_{gm} AS playcount,
+                            total_score_{gm} AS totalScore,
+                            pp_{gm} AS pp
+                            FROM rx_stats WHERE id = %s LIMIT 1""".format(
                 gm=modeForDB,
             ),
             [userID],
@@ -270,12 +270,12 @@ def getUserStatsAP(userID, gameMode):
     if gameMode == 3:  # mania
         stats = glob.db.fetch(
             """SELECT
-							ranked_score_{gm} AS rankedScore,
-							avg_accuracy_{gm} AS accuracy,
-							playcount_{gm} AS playcount,
-							total_score_{gm} AS totalScore,
-							pp_{gm} AS pp
-							FROM users_stats WHERE id = %s LIMIT 1""".format(
+                            ranked_score_{gm} AS rankedScore,
+                            avg_accuracy_{gm} AS accuracy,
+                            playcount_{gm} AS playcount,
+                            total_score_{gm} AS totalScore,
+                            pp_{gm} AS pp
+                            FROM users_stats WHERE id = %s LIMIT 1""".format(
                 gm=modeForDB,
             ),
             [userID],
@@ -286,12 +286,12 @@ def getUserStatsAP(userID, gameMode):
         # Get stats
         stats = glob.db.fetch(
             """SELECT
-							ranked_score_{gm} AS rankedScore,
-							avg_accuracy_{gm} AS accuracy,
-							playcount_{gm} AS playcount,
-							total_score_{gm} AS totalScore,
-							pp_{gm} AS pp
-							FROM ap_stats WHERE id = %s LIMIT 1""".format(
+                            ranked_score_{gm} AS rankedScore,
+                            avg_accuracy_{gm} AS accuracy,
+                            playcount_{gm} AS playcount,
+                            total_score_{gm} AS totalScore,
+                            pp_{gm} AS pp
+                            FROM ap_stats WHERE id = %s LIMIT 1""".format(
                 gm=modeForDB,
             ),
             [userID],
@@ -503,7 +503,7 @@ def updateLevel(userID, gameMode=0, totalScore=0):
     """
     # Make sure the user exists
     # if not exists(userID):
-    # 	return
+    #     return
 
     # Get total score from db if not passed
     mode = scoreUtils.readableGameMode(gameMode)
@@ -1173,7 +1173,7 @@ def IPLog(userID, ip):
     """
     glob.db.execute(
         """INSERT INTO ip_user (userid, ip, occurencies) VALUES (%s, %s, '1')
-						ON DUPLICATE KEY UPDATE occurencies = occurencies + 1""",
+                        ON DUPLICATE KEY UPDATE occurencies = occurencies + 1""",
         [userID, ip],
     )
 
@@ -1690,7 +1690,7 @@ def logIP(userID, ip):
     """
     glob.db.execute(
         """INSERT INTO ip_user (userid, ip, occurencies) VALUES (%s, %s, 1)
-						ON DUPLICATE KEY UPDATE occurencies = occurencies + 1""",
+                        ON DUPLICATE KEY UPDATE occurencies = occurencies + 1""",
         [userID, ip],
     )
 
@@ -1796,7 +1796,7 @@ def logHardware(userID, hashes, activation=False):
 
 
     :param userID: user id
-    :param hashes:	Peppy's botnet (client data) structure (new line = "|", already split)
+    :param hashes:    Peppy's botnet (client data) structure (new line = "|", already split)
                                     [0] osu! version
                                     [1] plain mac addressed, separated by "."
                                     [2] mac addresses hash set
@@ -1828,10 +1828,10 @@ def logHardware(userID, hashes, activation=False):
             log.debug("Logging Linux/Mac hardware")
             banned = glob.db.fetchAll(
                 """SELECT users.id as userid, hw_user.occurencies, users.username FROM hw_user
-				LEFT JOIN users ON users.id = hw_user.userid
-				WHERE hw_user.userid != %(userid)s
-				AND hw_user.unique_id = %(uid)s
-				AND (users.privileges & 3 != 3)""",
+                LEFT JOIN users ON users.id = hw_user.userid
+                WHERE hw_user.userid != %(userid)s
+                AND hw_user.unique_id = %(uid)s
+                AND (users.privileges & 3 != 3)""",
                 {
                     "userid": userID,
                     "uid": hashes[3],
@@ -1842,12 +1842,12 @@ def logHardware(userID, hashes, activation=False):
             log.debug("Logging Windows hardware")
             banned = glob.db.fetchAll(
                 """SELECT users.id as userid, hw_user.occurencies, users.username FROM hw_user
-				LEFT JOIN users ON users.id = hw_user.userid
-				WHERE hw_user.userid != %(userid)s
-				AND hw_user.mac = %(mac)s
-				AND hw_user.unique_id = %(uid)s
-				AND hw_user.disk_id = %(diskid)s
-				AND (users.privileges & 3 != 3)""",
+                LEFT JOIN users ON users.id = hw_user.userid
+                WHERE hw_user.userid != %(userid)s
+                AND hw_user.mac = %(mac)s
+                AND hw_user.unique_id = %(uid)s
+                AND hw_user.disk_id = %(diskid)s
+                AND (users.privileges & 3 != 3)""",
                 {
                     "userid": userID,
                     "mac": hashes[2],
@@ -1905,9 +1905,9 @@ def logHardware(userID, hashes, activation=False):
     # Update hash set occurencies
     glob.db.execute(
         """
-				INSERT INTO hw_user (id, userid, mac, unique_id, disk_id, occurencies) VALUES (NULL, %s, %s, %s, %s, 1)
-				ON DUPLICATE KEY UPDATE occurencies = occurencies + 1
-				""",
+                INSERT INTO hw_user (id, userid, mac, unique_id, disk_id, occurencies) VALUES (NULL, %s, %s, %s, %s, 1)
+                ON DUPLICATE KEY UPDATE occurencies = occurencies + 1
+                """,
         [userID, hashes[2], hashes[3], hashes[4]],
     )
 
@@ -1947,7 +1947,7 @@ def verifyUser(userID, hashes):
     Activate `userID`'s account.
 
     :param userID: user id
-    :param hashes: 	Peppy's botnet (client data) structure (new line = "|", already split)
+    :param hashes:     Peppy's botnet (client data) structure (new line = "|", already split)
                                     [0] osu! version
                                     [1] plain mac addressed, separated by "."
                                     [2] mac addresses hash set

@@ -21,7 +21,7 @@ def handle(userToken, packetData):
 
         # Hash password if needed
         # if password != "":
-        # 	password = generalUtils.stringMd5(password)
+        #     password = generalUtils.stringMd5(password)
 
         # Check password
         with glob.matches.matches[matchID] as match:

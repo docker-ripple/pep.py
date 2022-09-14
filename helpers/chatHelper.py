@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 from common.ripple import userUtils
-
 from constants import exceptions
 from constants import serverPackets
 from events import logoutEvent
@@ -244,7 +243,7 @@ def sendMessage(fro="", to="", message="", token=None, toIRC=True):
 
         # Make sure this is not a tournament client
         # if token.tournament:
-        # 	raise exceptions.userTournamentException()
+        #     raise exceptions.userTournamentException()
 
         # Make sure the user is not in restricted mode
         if token.restricted:
@@ -327,7 +326,7 @@ def sendMessage(fro="", to="", message="", token=None, toIRC=True):
 
             # Make sure the recipient is not a tournament client
             # if recipientToken.tournament:
-            # 	raise exceptions.userTournamentException()
+            #     raise exceptions.userTournamentException()
 
             # Make sure the recipient is not restricted or we are the bot
             if recipientToken.restricted and fro.lower() != glob.BOT_NAME.lower():
