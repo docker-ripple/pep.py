@@ -118,9 +118,6 @@ def handle(tornadoRequest):
             )
             raise exceptions.loginBannedException()
 
-        # No login errors!
-        log.info(f"DB stuff and password verification done at {t.end_time_str()}")
-
         # Verify this user (if pending activation)
         firstLogin = False
         if (
@@ -168,7 +165,6 @@ def handle(tornadoRequest):
             "UPDATE users SET osuver = %s WHERE id = %s LIMIT 1",
             [osuVersion, userID],
         )
-        log.info(f"Finished hardware and logging IP at {t.end_time_str()}")
 
         # Delete old tokens for that user and generate a new one
         isTournament = "tourney" in osuVersion
@@ -262,8 +258,6 @@ def handle(tornadoRequest):
                         "Bancho is in maintenance mode. Only mods/admins have full access to the server.\nType !system maintenance off in chat to turn off maintenance mode.",
                     ),
                 )
-
-        log.info(f"Donor, silence and maintenence checks at {t.end_time_str()}")
 
         # BAN CUSTOM CHEAT CLIENTS
         # 0Ainu = First Ainu build
@@ -371,8 +365,6 @@ def handle(tornadoRequest):
             responseData += OLD_CLIENT_NOTIF
             raise exceptions.loginFailedException
 
-        log.info(f"Anticheat checks at {t.end_time_str()}")
-
         # Send all needed login packets
         responseToken.enqueue(
             bytearray(serverPackets.silence_end_notify(silenceSeconds))
@@ -411,8 +403,6 @@ def handle(tornadoRequest):
                 if not token.restricted:
                     responseToken.enqueue(serverPackets.user_presence(token.userID))
 
-        log.info(f"Server state and chat {t.end_time_str()}")
-
         # Localise the user based off IP.
         # Get location and country from IP
         latitude, longitude, countryLetters = get_full(requestIP)
@@ -431,9 +421,10 @@ def handle(tornadoRequest):
         if not responseToken.restricted:
             glob.streams.broadcast("main", serverPackets.user_presence(userID))
 
-        # creating notification
+        # TODO: Make quotes database based.
         t_str = t.end_time_str()
         online_users = len(glob.tokens.tokens)
+
         # Wylie has his own quote he gets to enjoy only himself lmfao. UPDATE: Electro gets it too.
         if userID in (4674, 3277):
             quote = "I lost an S because I saw her lewd"
