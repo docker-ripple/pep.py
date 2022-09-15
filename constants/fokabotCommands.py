@@ -848,7 +848,7 @@ def systemStatus(fro, chan, message):
         (
             f"---> {config.SRV_NAME} <---",
             " - Realtime Server -",
-            "> Running RealistikOsu pep.py fork.",
+            "> Running the RealistikOsu pep.py fork.",
             f"> Online Users: {data['connectedUsers']}",
             f"> Multiplayer: {data['matches']}",
             f"> Uptime: {data['uptime']}",

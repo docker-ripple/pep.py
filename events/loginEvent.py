@@ -459,9 +459,6 @@ def handle(tornadoRequest):
     except exceptions.loginBannedException:
         # Login banned error packet
         responseData += serverPackets.login_banned()
-    except exceptions.loginLockedException:
-        # Login banned error packet
-        responseData += serverPackets.login_locked()
     except exceptions.loginCheatClientsException:
         # Banned for logging in with cheats
         responseData += serverPackets.login_cheats()
