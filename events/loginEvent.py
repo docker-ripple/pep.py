@@ -86,7 +86,7 @@ def handle(tornadoRequest):
         # Set stuff from single query rather than many userUtils calls.
         user_db = glob.db.fetch(
             "SELECT id, privileges, silence_end, donor_expire, frozen, "
-            "firstloginafterfrozen, freezedate FROM users "
+            "firstloginafterfrozen, freezedate, bypass_hwid FROM users "
             "WHERE username_safe = %s LIMIT 1",
             (safe_username,),
         )
@@ -126,8 +126,9 @@ def handle(tornadoRequest):
         # Verify this user (if pending activation)
         firstLogin = False
         if (
-            priv & privileges.USER_PENDING_VERIFICATION
-            or not userUtils.hasVerifiedHardware(userID)
+            priv
+            & privileges.USER_PENDING_VERIFICATION
+            # or not userUtils.hasVerifiedHardware(userID)
         ):
             if userUtils.verifyUser(userID, clientData):
                 # Valid account
@@ -140,12 +141,20 @@ def handle(tornadoRequest):
                 glob.verifiedCache[str(userID)] = 0
                 raise exceptions.loginBannedException()
 
+        # Check restricted mode (and eventually send message)
+        # Cache this for less db queries
+        user_restricted = (priv & privileges.USER_NORMAL) and not (
+            priv & privileges.USER_PUBLIC
+        )
+
         # Save HWID in db for multiaccount detection
         hwAllowed = userUtils.logHardware(
-            userID,
-            clientData,
-            firstLogin,
-        )  # THIS IS SO SLOW
+            user_id=userID,
+            hashes=clientData,
+            is_restricted=user_restricted,
+            activation=firstLogin,
+            bypass_restrict=user_db["bypass_hwid"],
+        )
 
         # This is false only if HWID is empty
         # if HWID is banned, we get restricted so there's no
@@ -174,12 +183,6 @@ def handle(tornadoRequest):
             tournament=isTournament,
         )
         responseTokenString = responseToken.token
-
-        # Check restricted mode (and eventually send message)
-        # Cache this for less db queries
-        user_restricted = (priv & privileges.USER_NORMAL) and not (
-            priv & privileges.USER_PUBLIC
-        )
 
         if user_restricted:
             responseToken.notify_restricted()

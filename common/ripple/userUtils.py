@@ -17,6 +17,7 @@ from logger import log
 from common.ripple import scoreUtils
 from objects import glob
 from config import config
+from helpers.user_helper import restrict_with_log
 
 
 def getBeatmapTime(beatmapID):
@@ -1788,7 +1789,13 @@ def isInAnyPrivilegeGroup(userID, groups):
     )
 
 
-def logHardware(userID, hashes, activation=False):
+def logHardware(
+    user_id: int,
+    hashes: list[str],
+    is_restricted: bool,
+    activation: bool = False,
+    bypass_restrict: bool = False,
+) -> bool:
     """
     Hardware log
     USED FOR MULTIACCOUNT DETECTION
@@ -1805,116 +1812,54 @@ def logHardware(userID, hashes, activation=False):
     :return: True if hw is not banned, otherwise false
     """
     # Make sure the strings are not empty
-    for i in hashes[2:5]:
-        if i == "":
-            log.warning(
-                "Invalid hash set ({}) for user {} in HWID check".format(
-                    hashes,
-                    userID,
-                ),
-                "bunk",
-            )
-            return False
+    if len(hashes) != 5 or not all(hashes[2:5]):
+        log.warning(f"User {user_id} has sent an empty hwid hash set {hashes}.")
+        return False
 
-    # Run some HWID checks on that user if he is not restricted
-    if not isRestricted(userID):
-        # Get username
-        username = getUsername(userID)
-
-        # Get the list of banned or restricted users that have logged in from this or similar HWID hash set
+    if not is_restricted:
         if hashes[2] == "b4ec3c4334a0249dae95c284ec5983df":
-            # Running under wine, check by unique id
-            log.debug("Logging Linux/Mac hardware")
-            banned = glob.db.fetchAll(
-                """SELECT users.id as userid, hw_user.occurencies, users.username FROM hw_user
-                LEFT JOIN users ON users.id = hw_user.userid
-                WHERE hw_user.userid != %(userid)s
-                AND hw_user.unique_id = %(uid)s
-                AND (users.privileges & 3 != 3)""",
-                {
-                    "userid": userID,
-                    "uid": hashes[3],
-                },
+            matching_users = glob.db.fetchAll(
+                "SELECT userid FROM hw_user WHERE "
+                "userid != %s AND unique_id = %s LIMIT 1",
+                (user_id, hashes[3]),
             )
+
         else:
-            # Running under windows, do all checks
-            log.debug("Logging Windows hardware")
-            banned = glob.db.fetchAll(
-                """SELECT users.id as userid, hw_user.occurencies, users.username FROM hw_user
-                LEFT JOIN users ON users.id = hw_user.userid
-                WHERE hw_user.userid != %(userid)s
-                AND hw_user.mac = %(mac)s
-                AND hw_user.unique_id = %(uid)s
-                AND hw_user.disk_id = %(diskid)s
-                AND (users.privileges & 3 != 3)""",
-                {
-                    "userid": userID,
-                    "mac": hashes[2],
-                    "uid": hashes[3],
-                    "diskid": hashes[4],
-                },
+            matching_users = glob.db.fetchAll(
+                "SELECT userid FROM hw_user WHERE "
+                "userid != %s AND (mac = %s OR unique_id = %s OR disk_id = %s) LIMIT 1",
+                (user_id, hashes[2], hashes[3], hashes[4]),
             )
 
-        for i in banned:
-            # Get the total numbers of logins
-            total = glob.db.fetch(
-                "SELECT COUNT(*) AS count FROM hw_user WHERE userid = %s LIMIT 1",
-                [userID],
+        if matching_users:
+            # User has a matching hwid, ban him
+            log.warning(
+                f"User {user_id} has a matching hwid with user IDs: {matching_users!r}.",
             )
-            # and make sure it is valid
-            if total is None:
-                continue
-            total = total["count"]
 
-            # Calculate 10% of total
-            perc = (total * 10) / 100
-
-            if i["occurencies"] >= perc:
-                # Now we check if have a bypass on.
-                user_data = glob.db.fetch(
-                    f"SELECT bypass_hwid FROM users WHERE id = {userID} LIMIT 1",
-                )
-
-                # If they are explicitly allowed to multiacc
-                if user_data["bypass_hwid"]:
-                    log.warning(f"Allowed user {userID} to bypass hwid check.")
-                    return True
-
-                # If the banned user has logged in more than 10% of the times from this user, restrict this user
-                restrict(userID)
-                appendNotes(
-                    userID,
-                    "Logged in from HWID ({hwid}) used more than 10% from user {banned} ({bannedUserID}), who is banned/restricted.".format(
-                        hwid=hashes[2:5],
-                        banned=i["username"],
-                        bannedUserID=i["userid"],
-                    ),
-                )
-                log.warning(
-                    "**{user}** ({userID}) has been restricted because he has logged in from HWID _({hwid})_ used more than 10% from banned/restricted user **{banned}** ({bannedUserID}), **possible multiaccount**.".format(
-                        user=username,
-                        userID=userID,
-                        hwid=hashes[2:5],
-                        banned=i["username"],
-                        bannedUserID=i["userid"],
-                    ),
-                    "cm",
+            if not bypass_restrict:
+                restrict_with_log(
+                    user_id,
+                    "HWID Match with another user.",
+                    f"The sent hwids ({hashes!r}) have matched with the following users: {matching_users!r}. "
+                    "This implies that they are likely to be using a multiaccount.",
                 )
 
     # Update hash set occurencies
     glob.db.execute(
         """
-                INSERT INTO hw_user (id, userid, mac, unique_id, disk_id, occurencies) VALUES (NULL, %s, %s, %s, %s, 1)
-                ON DUPLICATE KEY UPDATE occurencies = occurencies + 1
-                """,
-        [userID, hashes[2], hashes[3], hashes[4]],
+            INSERT INTO hw_user (id, userid, mac, unique_id, disk_id, occurencies) VALUES (NULL, %s, %s, %s, %s, 1)
+            ON DUPLICATE KEY UPDATE occurencies = occurencies + 1
+        """,
+        [user_id, hashes[2], hashes[3], hashes[4]],
     )
 
     # Optionally, set this hash as 'used for activation'
     if activation:
         glob.db.execute(
-            "UPDATE hw_user SET activated = 1 WHERE userid = %s AND mac = %s AND unique_id = %s AND disk_id = %s",
-            [userID, hashes[2], hashes[3], hashes[4]],
+            "UPDATE hw_user SET activated = 1 WHERE userid = %s AND mac = %s AND unique_id = %s AND disk_id = %s"
+            "LIMIT 1",
+            [user_id, hashes[2], hashes[3], hashes[4]],
         )
 
     # Access granted, abbiamo impiegato 3 giorni
@@ -2034,7 +1979,6 @@ def verifyUser(userID, hashes):
                 username=username,
                 userID=userID,
             ),
-            "cm",
         )
 
         # Disallow login

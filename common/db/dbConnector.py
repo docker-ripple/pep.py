@@ -189,7 +189,7 @@ class DatabasePool:
         """
         self.pool = ConnectionPool(host, username, password, database, initialSize)
 
-    def execute(self, query: str, params: tuple = ()) -> int:
+    def execute(self, query: str, params: object = ()) -> int:
         """
         Executes a query
 
@@ -213,7 +213,7 @@ class DatabasePool:
             if worker is not None:
                 self.pool.putWorker(worker)
 
-    def fetch(self, query: str, params: tuple = ()) -> Optional[dict[str, Any]]:
+    def fetch(self, query: str, params: object = ()) -> Optional[dict[str, Any]]:
         """
         Fetch a single value from db that matches given query
 
@@ -237,7 +237,7 @@ class DatabasePool:
             if worker is not None:
                 self.pool.putWorker(worker)
 
-    def fetchAll(self, query: str, params: tuple = ()) -> list[dict[str, Any]]:
+    def fetchAll(self, query: str, params: object = ()) -> list[dict[str, Any]]:
         """
         Fetch all values from db that matche given query.
         Calls self.fetch with all = True.
