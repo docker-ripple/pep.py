@@ -8,6 +8,7 @@ from datetime import datetime
 
 from common.constants import privileges
 from common.ripple import userUtils
+from common.ripple.userUtils import restrict_with_log
 from config import config
 from constants import exceptions
 from constants import serverPackets
@@ -17,7 +18,6 @@ from helpers.geo_helper import get_full
 from helpers.realistik_stuff import Timer
 from helpers.user_helper import get_country
 from helpers.user_helper import insert_ban_log
-from helpers.user_helper import restrict_with_log
 from helpers.user_helper import set_country
 from helpers.user_helper import verify_password
 from logger import log

@@ -23,6 +23,7 @@ from common.constants import gameModes
 from common.constants import mods
 from common.constants import privileges
 from common.ripple import userUtils
+from common.ripple.userUtils import restrict_with_log
 from config import config
 from constants import exceptions
 from constants import matchModModes
@@ -35,7 +36,6 @@ from helpers import chatHelper as chat
 from helpers import systemHelper
 from helpers import user_helper
 from helpers.status_helper import UserStatus
-from helpers.user_helper import restrict_with_log
 from helpers.user_helper import username_safe
 from logger import log
 from objects import fokabot
@@ -622,7 +622,7 @@ def restrict(fro, chan, message):
     if not targetUserID:
         return f"Could not find the user '{target}' on the server."
 
-    user_helper.restrict_with_log(
+    restrict_with_log(
         targetUserID,
         summary,
         detail,

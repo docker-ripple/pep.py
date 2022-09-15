@@ -10,6 +10,8 @@ try:
 except ImportError:
     from MySQLdb._exceptions import ProgrammingError
 
+from typing import Optional
+
 from common import generalUtils
 from common.constants import gameModes, mods
 from common.constants import privileges
@@ -17,7 +19,6 @@ from logger import log
 from common.ripple import scoreUtils
 from objects import glob
 from config import config
-from helpers.user_helper import restrict_with_log
 
 
 def getBeatmapTime(beatmapID):
@@ -2223,3 +2224,72 @@ def updateTotalHitsAP(userID=0, gameMode=gameModes.STD, newHits=0, score=None):
         ),
         (newHits, userID),
     )
+
+
+def insert_ban_log(
+    user_id: int,
+    summary: str,
+    detail: str,
+    prefix: bool = True,
+    from_id: Optional[int] = None,
+) -> None:
+    """Inserts a ban log for a user into the database.
+
+    Args:
+        user_id (int): The ID of the user to assign the log to.
+        summary (str): A short description of the reason.
+        detail (str): A more detailed, in-depth description of the reason.
+        prefix (bool, optional): Whether the detail should be prefixed by
+            the peppy signature. Defaults to True.
+        from_id (int, optional): The ID of the user who banned the user.
+            Defaults to the configured bot.
+    """
+
+    if from_id is None:
+        from_id = config.SRV_BOT_ID
+
+    if prefix:
+        detail = "pep.py Autoban: " + detail
+
+    glob.db.execute(
+        "INSERT INTO ban_logs (from_id, to_id, summary, detail) VALUES (%s, %s, %s, %s)",
+        (
+            from_id,
+            user_id,
+            summary,
+            detail,
+        ),
+    )
+
+
+def restrict_with_log(
+    user_id: int,
+    summary: str,
+    detail: str,
+    prefix: bool = True,
+    from_id: Optional[int] = None,
+) -> None:
+    """Restricts the user alongside inserting a log into the database.
+
+    Args:
+        user_id (int): The ID of the user to assign the log to.
+        summary (str): A short description of the reason.
+        detail (str): A more detailed, in-depth description of the reason.
+        prefix (bool, optional): Whether the detail should be prefixed by
+            the peppy signature. Defaults to True.
+        from_id (int, optional): The ID of the user who banned the user.
+            Defaults to the configured bot.
+    """
+
+    if from_id is None:
+        from_id = config.SRV_BOT_ID
+
+    glob.db.execute(
+        f"UPDATE users SET privileges = privileges & ~{privileges.USER_PUBLIC}, "
+        "ban_datetime = UNIX_TIMESTAMP() WHERE id = %s LIMIT 1",
+        (user_id,),
+    )
+    glob.redis.publish("peppy:ban", user_id)
+    removeFromLeaderboard(user_id)
+
+    insert_ban_log(user_id, summary, detail, prefix, from_id)

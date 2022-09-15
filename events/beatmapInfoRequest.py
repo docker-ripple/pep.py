@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from helpers.user_helper import restrict_with_log
+from common.ripple.userUtils import restrict_with_log
 from objects.osuToken import UserToken
 
 
