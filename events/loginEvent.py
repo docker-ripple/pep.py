@@ -17,7 +17,6 @@ from helpers import geo_helper
 from helpers.geo_helper import get_full
 from helpers.realistik_stuff import Timer
 from helpers.user_helper import get_country
-from helpers.user_helper import insert_ban_log
 from helpers.user_helper import set_country
 from helpers.user_helper import verify_password
 from logger import log
