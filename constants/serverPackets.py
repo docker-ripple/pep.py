@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from common.constants import privileges
 from common.ripple import userUtils
-
 from constants import dataTypes
 from constants import packetIDs
 from constants import userRanks

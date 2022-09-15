@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from common.redis import generalPubSubHandler
-
 from logger import log
 from objects import glob
 

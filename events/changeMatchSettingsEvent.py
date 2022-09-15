@@ -3,7 +3,6 @@ from __future__ import annotations
 import random
 
 from common import generalUtils
-
 from constants import clientPackets
 from constants import matchModModes
 from constants import matchTeams
