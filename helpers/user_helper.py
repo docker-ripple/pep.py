@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from typing import Optional
+
 import bcrypt
+
 from common.constants import privileges
 from common.ripple.userUtils import removeFromLeaderboard
-
+from config import config
 from objects import glob
 
 
@@ -78,7 +81,7 @@ def insert_ban_log(
     summary: str,
     detail: str,
     prefix: bool = True,
-    from_id: int = 999,  # TODO: Don't hardcode the bot id.
+    from_id: Optional[int] = None,
 ) -> None:
     """Inserts a ban log for a user into the database.
 
@@ -89,8 +92,11 @@ def insert_ban_log(
         prefix (bool, optional): Whether the detail should be prefixed by
             the peppy signature. Defaults to True.
         from_id (int, optional): The ID of the user who banned the user.
-            Defaults to 999 (the bot).
+            Defaults to the configured bot.
     """
+
+    if from_id is None:
+        from_id = config.SRV_BOT_ID
 
     if prefix:
         detail = "pep.py Autoban: " + detail
@@ -111,7 +117,7 @@ def restrict_with_log(
     summary: str,
     detail: str,
     prefix: bool = True,
-    from_id: int = 999,
+    from_id: Optional[int] = None,
 ) -> None:
     """Restricts the user alongside inserting a log into the database.
 
@@ -122,8 +128,11 @@ def restrict_with_log(
         prefix (bool, optional): Whether the detail should be prefixed by
             the peppy signature. Defaults to True.
         from_id (int, optional): The ID of the user who banned the user.
-            Defaults to 999 (the bot).
+            Defaults to the configured bot.
     """
+
+    if from_id is None:
+        from_id = config.SRV_BOT_ID
 
     glob.db.execute(
         f"UPDATE users SET privileges = privileges & ~{privileges.USER_PUBLIC}, "

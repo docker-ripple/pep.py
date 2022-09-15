@@ -16,11 +16,7 @@ from common.constants import privileges
 from logger import log
 from common.ripple import scoreUtils
 from objects import glob
-
-try:
-    import objects.beatmap
-except:
-    pass
+from config import config
 
 
 def getBeatmapTime(beatmapID):
@@ -1421,16 +1417,19 @@ def getSilenceEnd(userID):
     )["silence_end"]
 
 
-def silence(userID, seconds, silenceReason, author=999):
+def silence(userID, seconds, silenceReason, author=None):
     """
     Silence someone
 
     :param userID: user id
     :param seconds: silence length in seconds
     :param silenceReason: silence reason shown on website
-    :param author: userID of who silenced the user. Default: 999
+    :param author: userID of who silenced the user. Default: the server's bot.
     :return:
     """
+
+    if author is None:
+        author = config.SRV_BOT_ID
     # db qurey
     silenceEndTime = int(time.time()) + seconds
     glob.db.execute(

@@ -8,7 +8,7 @@ from datetime import datetime
 
 from common.constants import privileges
 from common.ripple import userUtils
-
+from config import config
 from constants import exceptions
 from constants import serverPackets
 from helpers import chatHelper as chat
@@ -27,20 +27,20 @@ MINIMUM_CLIENT_YEAR = 2022
 
 UNFREEZE_NOTIF = serverPackets.notification(
     "Thank you for providing a liveplay! You have proven your legitemacy and "
-    "have subsequently been unfrozen. Have fun playing RealistikOsu!",
+    f"have subsequently been unfrozen. Have fun playing {config.SRV_NAME}!",
 )
 FREEZE_RES_NOTIF = serverPackets.notification(
     "Your window for liveplay sumbission has expired! Your account has been "
     "restricted as per our cheating policy. Please contact staff for more "
-    "information on what can be done. This can be done via the RealistikCentral Discord server.",
+    f"information on what can be done. This can be done via the {config.SRV_NAME} Discord server.",
 )
 FALLBACK_NOTIF = serverPackets.notification(
-    "Fallback clients are not supported by RealistikOsu. This is due to a combination of missing features "
-    "and server security. Please use a modern build of osu! to play RealistikOsu.",
+    f"Fallback clients are not supported by {config.SRV_NAME}. This is due to a combination of missing features "
+    f"and server security. Please use a modern build of osu! to play {config.SRV_NAME}.",
 )
 OLD_CLIENT_NOTIF = serverPackets.notification(
     f"You are using an outdated client (minimum release year {MINIMUM_CLIENT_YEAR}). "
-    "Please update your client to the latest version to play RealistikOsu.",
+    f"Please update your client to the latest version to play {config.SRV_NAME}.",
 )
 
 
@@ -95,7 +95,7 @@ def handle(tornadoRequest):
             # Invalid username
             log.error(f"Login failed for user {username} (user not found)!")
             responseData += serverPackets.notification(
-                "RealistikOsu: This user does not exist!",
+                f"{config.SRV_NAME}: This user does not exist!",
             )
             raise exceptions.loginFailedException()
 
@@ -108,7 +108,7 @@ def handle(tornadoRequest):
             # Invalid password
             log.error(f"Login failed for user {username} (invalid password)!")
             responseData += serverPackets.notification(
-                "RealistikOsu: Invalid password!",
+                f"{config.SRV_NAME}: Invalid password!",
             )
             raise exceptions.loginFailedException()
 
@@ -116,7 +116,7 @@ def handle(tornadoRequest):
         if (not priv & 3 > 0) and (not priv & privileges.USER_PENDING_VERIFICATION):
             log.error(f"Login failed for user {username} (user is banned)!")
             responseData += serverPackets.notification(
-                "RealistikOsu: You have been banned!",
+                f"{config.SRV_NAME}: You have been banned!",
             )
             raise exceptions.loginBannedException()
 
@@ -195,7 +195,10 @@ def handle(tornadoRequest):
         if frozen and not passed:
             responseToken.enqueue(
                 serverPackets.notification(
-                    f"The RealistikOsu staff team has found you suspicious and would like to request a liveplay. You have until {readabledate} (UTC) to provide a liveplay to the staff team. This can be done via the RealistikCentral Discord server. Failure to provide a valid liveplay will result in your account being automatically restricted.",
+                    f"The {config.SRV_NAME} staff team has found you suspicious and would like to request a liveplay. "
+                    f"You have until {readabledate} (UTC) to provide a liveplay to the staff team. This can be done via "
+                    f"the {config.SRV_NAME} Discord server. Failure to provide a valid liveplay will result in your account "
+                    "being automatically restricted.",
                 ),
             )
         elif frozen and passed:
@@ -222,9 +225,10 @@ def handle(tornadoRequest):
                 )
                 responseToken.enqueue(
                     serverPackets.notification(
-                        "Your supporter status expires in {}! Following this, you will lose your supporter privileges (such as the further profile customisation options, name changes or profile wipes) and will not be able to access supporter features. If you wish to keep supporting RealistikOsu and you don't want to lose your donor privileges, you can donate again by clicking on 'Donate' on our website.".format(
-                            expireIn,
-                        ),
+                        f"Your supporter status expires in {expireIn}! Following this, you will lose your supporter privileges "
+                        "(such as the further profile customisation options, name changes or profile wipes) and will not "
+                        f"be able to access supporter features. If you wish to keep supporting {config.SRV_NAME} and you "
+                        "don't want to lose your donor privileges, you can donate again by clicking on 'Donate' on our website.",
                     ),
                 )
 
@@ -438,7 +442,7 @@ def handle(tornadoRequest):
         # Me and relesto are getting one as well lmao. UPDATE: Sky and Aochi gets it too lmao.
         elif userID in (1000, 1180, 3452, 4812):
             quote = (
-                f"Hello I'm RealistikBot! The server's official bot to assist you, "
+                f"Hello I'm {config.SRV_BOT_NAME}! The server's official bot to assist you, "
                 "if you want to know what I can do just type !help"
             )
         else:
@@ -501,7 +505,7 @@ def handle(tornadoRequest):
         )
         responseData += serverPackets.login_reply(-5)  # Bancho error
         responseData += serverPackets.notification(
-            "RealistikOsu: The server has experienced an error while logging you "
+            f"{config.SRV_NAME}: The server has experienced an error while logging you "
             "in! Please notify the developers for help.",
         )
     finally:

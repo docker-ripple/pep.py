@@ -77,7 +77,7 @@ def refresh_bmap(md5: str) -> None:
 
 def calc_completion(bmapid, n300, n100, n50, miss):
     bmap = osupyparser.OsuFile(
-        f"/home/realistikosu/ussr/.data/maps/{bmapid}.osu",
+        f"{config.MAPS_DIRECTORY}{bmapid}.osu",
     ).parse_file()
 
     total_hits = int(n300 + n100 + n50 + miss)
@@ -298,20 +298,18 @@ def editMap(fro: str, chan: str, message: list[str]) -> str:
 
     if set_check:  # In theory it should work, practically i have no fucking clue.
         map_name = res["song_name"].split("[")[0].strip()
-        beatmap_url = f"the beatmap set [https://ussr.pl/beatmaps/{token.tillerino[0]} {map_name}]"
+        beatmap_url = f"the beatmap set [https://{config.SRV_DOMAIN}/beatmaps/{token.tillerino[0]} {map_name}]"
     else:
         map_name = res["song_name"]
-        beatmap_url = (
-            f"the beatmap [https://ussr.pl/beatmaps/{token.tillerino[0]} {map_name}]"
-        )
+        beatmap_url = f"the beatmap [https://{config.SRV_DOMAIN}/beatmaps/{token.tillerino[0]} {map_name}]"
 
     if config.NEW_RANKED_WEBHOOK:
         webhook = DiscordWebhook(url=config.NEW_RANKED_WEBHOOK)
         embed = DiscordEmbed(description=f"Ranked by {fro}", color=242424)
         embed.set_author(
             name=f"{map_name} was just {status_readable}",
-            url=f"https://ussr.pl/beatmaps/{token.tillerino[0]}",
-            icon_url=f"https://a.ussr.pl/{token.userID}",
+            url=f"https://{config.SRV_DOMAIN}/beatmaps/{token.tillerino[0]}",
+            icon_url=f"https://a.{config.SRV_DOMAIN}/{token.userID}",
         )
         embed.set_footer(text="via pep.py!")
         embed.set_image(
@@ -323,7 +321,7 @@ def editMap(fro: str, chan: str, message: list[str]) -> str:
     chat.sendMessage(
         glob.BOT_NAME,
         "#announce",
-        f"[https://ussr.pl/u/{token.userID} {fro}] has {status_readable} {beatmap_url}",
+        f"[https://{config.SRV_DOMAINs}/u/{token.userID} {fro}] has {status_readable} {beatmap_url}",
     )
     return f"Successfully {status_readable} a map."
 
@@ -454,8 +452,8 @@ def kick(fro, chan, message):
 def fokabotReconnect(fro, chan, message):
     """Forces the bot to reconnect."""
     # Check if the bot is already connected
-    if glob.tokens.getTokenFromUserID(999) is not None:
-        return f"{glob.BOT_NAME} is already connected to RealistikOsu!"
+    if glob.tokens.getTokenFromUserID(config.SRV_BOT_ID) is not None:
+        return f"{glob.BOT_NAME} is already connected to {config.SRV_NAME}!"
 
     # Bot is not connected, connect it
     fokabot.connect()
@@ -570,8 +568,6 @@ def ban(fro, chan, message):
     userID = userUtils.getID(fro)
     if not targetUserID:
         return f"{target}: user not found"
-    if targetUserID in (999, 1000, 1001, 1002, 1005):
-        return "NO!"
     # Set allowed to 0
     userUtils.ban(targetUserID)
 
@@ -677,7 +673,8 @@ def freeze(fro, chan, message):
     if targetToken is not None:
         targetToken.enqueue(
             serverPackets.notification(
-                "You have been frozen! The RealistikOsu staff team has found you suspicious and would like to request a liveplay. Visit ussr.pl for more info.",
+                f"You have been frozen! The {config.SRV_NAME} staff team has found you "
+                f"suspicious and would like to request a liveplay. Visit {config.SRV_DOMAIN} for more info.",
             ),
         )
 
@@ -717,7 +714,8 @@ def unfreeze(fro, chan, message):
     if targetToken is not None:
         targetToken.enqueue(
             serverPackets.notification(
-                "Your account has been unfrozen! You have proven your legitemacy. Thank you and have fun playing on RealistikOsu!",
+                "Your account has been unfrozen! You have proven your legitemacy. "
+                f"Thank you and have fun playing on {config.SRV_NAME}!",
             ),
         )
 
@@ -846,9 +844,9 @@ def systemStatus(fro, chan, message):
     # Fetch
     data = systemHelper.getSystemInfo()
 
-    msg = "\n".join(
+    return "\n".join(
         (
-            "---> RealistikOsu <---",
+            f"---> {config.SRV_NAME} <---",
             " - Realtime Server -",
             "> Running RealistikOsu pep.py fork.",
             f"> Online Users: {data['connectedUsers']}",
@@ -861,8 +859,6 @@ def systemStatus(fro, chan, message):
             f"> CPU Utilisation History: {'%, '.join(data['loadAverage'])}",
         ),
     )
-
-    return msg
 
 
 @registerCommand(trigger="\x01ACTION")
@@ -1071,8 +1067,8 @@ def tillerinoLast(fro, chan, message):
     token.tillerino[2] = fc_acc
     oppaiData = getPPMessage(token.userID, just_data=True)
 
-    user_embed = f"[https://ussr.pl/u/{token.userID} {fro}]"
-    map_embed = f"[http://ussr.pl/beatmaps/{data['bid']} {data['sn']}]"
+    user_embed = f"[https://{config.SRV_DOMAIN}/u/{token.userID} {fro}]"
+    map_embed = f"[http://{config.SRV_DOMAIN}/beatmaps/{data['bid']} {data['sn']}]"
 
     response = [
         f"{user_embed} | {map_embed} +{generalUtils.readableMods(data['mods'])}",
@@ -1393,7 +1389,7 @@ def multiplayer(fro, chan, message):
                 "That user is not connected to bancho right now.",
             )
         _match = glob.matches.matches[getMatchIDFromChannel(chan)]
-        _match.invite(999, userID)
+        _match.invite(config.SRV_BOT_ID, userID)
         token.enqueue(
             serverPackets.notification(
                 f"Please accept the invite you've just received from {glob.BOT_NAME} to "

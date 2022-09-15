@@ -6,7 +6,7 @@ import tornado.gen
 import tornado.web
 from tornado.ioloop import IOLoop
 
-from config import configig
+from config import config
 from logger import log
 from objects import glob
 

@@ -7,6 +7,7 @@ import time
 from typing import Optional
 from typing import TYPE_CHECKING
 
+from config import config
 from constants import dataTypes
 from constants import matchModModes
 from constants import matchScoringTypes
@@ -515,18 +516,12 @@ class Match:
 
         # Set vinse id if needed
         chanName = f"#multi_{self.matchID}"
-        # if self.vinseID is None:
-        #     self.vinseID = (int(time.time()) // (60 * 15)) << 32 | self.matchID
-        #     chat.sendMessage(glob.BOT_NAME, chanName, "Match history available [{} here]".format(
-        #         "https://vinse.ussr.pl/match/{}".format(self.vinseID)
-        #     ))
-
         # Changing this to be a general notice.
         if not self.bloodcatAlert:
             chat.sendMessage(
                 glob.BOT_NAME,
                 chanName,
-                "Hey! Welcome to the RealistikOsu multiplayer! If you ever encounter "
+                f"Hey! Welcome to the {config.SRV_NAME} multiplayer! If you ever encounter "
                 "a map you are unable to download through our direct, you can use the "
                 "!mirror command to get an external download link!",
             )
@@ -804,7 +799,7 @@ class Match:
             return
 
         # BOT IS BUSY!!!
-        if to == 999:
+        if to == config.SRV_BOT_ID:
             chat.sendMessage(
                 glob.BOT_NAME,
                 froToken.username,

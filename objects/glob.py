@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from helpers.status_helper import StatusManager
 
 # Consts.
-BOT_NAME = "RealistikBot"
+BOT_NAME = config.SRV_BOT_NAME
 
 __version__ = "3.1.0"
 

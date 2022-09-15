@@ -191,17 +191,6 @@ def readableMods(__mods):
     return r
 
 
-def strContains(s, w):
-    """
-    Check if `w` is in `s`
-
-    :param s: haystack
-    :param w: needle
-    :return: True if `w` is in `s`, otherwise False
-    """
-    return (" " + w + " ") in (" " + s + " ")
-
-
 def calc_acc(mode, n300, n100, n50, miss, katu, geki):
 
     if mode == 0:

@@ -56,6 +56,7 @@ from events import tournamentLeaveMatchChannelEvent
 from events import beatmapInfoRequest
 from helpers import packetHelper
 from objects import glob
+from config import config
 
 # Placing this here so we do not have to register this every conn.
 
@@ -179,7 +180,7 @@ class handler(requestsManager.asyncRequestHandler):
             except exceptions.tokenNotFoundException:
                 # Token not found. Get the user to be reconnected.
                 responseData = serverPackets.server_restart(1)
-                responseData += serverPackets.notification("You don't seem to be logged into RealistikOsu anymore... This is common during server restarts, trying to log you back in.")
+                responseData += serverPackets.notification(f"You don't seem to be logged into {config.SRV_NAME} anymore... This is common during server restarts, trying to log you back in.")
                 log.warning("Received unknown token! This is normal during server restarts. Reconnecting them.")
             finally:
                 # Unlock token

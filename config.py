@@ -25,6 +25,11 @@ class Config:
     THREADS_COUNT: int = 2
     NEW_RANKED_WEBHOOK: str = ""
     USING_CF: bool = True
+    SRV_NAME: str = "RealistikOsu"
+    SRV_DOMAIN: str = "ussr.pl"
+    SRV_BOT_NAME: str = "RealistikBot"
+    SRV_BOT_ID: int = 999
+    MAPS_DIRECTORY: str = "/home/realistikosu/ussr/.data/maps/"
 
 
 def read_config_json() -> dict[str, Any]:

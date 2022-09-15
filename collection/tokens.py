@@ -7,6 +7,7 @@ from typing import Optional
 import redis
 
 from common.ripple import userUtils
+from config import config
 from constants import serverPackets
 from constants.exceptions import periodicLoopException
 from events import logoutEvent
@@ -168,7 +169,7 @@ class TokenList:
                 # Check timeout (fokabot is ignored)
                 if (
                     value.pingTime < timeoutLimit
-                    and value.userID != 999
+                    and value.userID != config.SRV_BOT_ID
                     and not value.irc
                     and not value.tournament
                 ):
