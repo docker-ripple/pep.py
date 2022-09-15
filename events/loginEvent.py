@@ -23,8 +23,6 @@ from helpers.user_helper import verify_password
 from logger import log
 from objects import glob
 
-MINIMUM_CLIENT_YEAR = 2022
-
 UNFREEZE_NOTIF = serverPackets.notification(
     "Thank you for providing a liveplay! You have proven your legitemacy and "
     f"have subsequently been unfrozen. Have fun playing {config.SRV_NAME}!",
@@ -39,7 +37,7 @@ FALLBACK_NOTIF = serverPackets.notification(
     f"and server security. Please use a modern build of osu! to play {config.SRV_NAME}.",
 )
 OLD_CLIENT_NOTIF = serverPackets.notification(
-    f"You are using an outdated client (minimum release year {MINIMUM_CLIENT_YEAR}). "
+    f"You are using an outdated client (minimum release year {config.SRV_MIN_CLIENT_YEAR}). "
     f"Please update your client to the latest version to play {config.SRV_NAME}.",
 )
 
@@ -368,7 +366,7 @@ def handle(tornadoRequest):
             raise exceptions.loginFailedException
 
         # Misc outdated client check
-        elif int(osuVersion[1:5]) < MINIMUM_CLIENT_YEAR:
+        elif int(osuVersion[1:5]) < config.SRV_MIN_CLIENT_YEAR:
             glob.tokens.deleteToken(userID)
             responseData += OLD_CLIENT_NOTIF
             raise exceptions.loginFailedException

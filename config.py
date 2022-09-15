@@ -28,6 +28,7 @@ class Config:
     SRV_DOMAIN: str = "ussr.pl"
     SRV_BOT_NAME: str = "RealistikBot"
     SRV_BOT_ID: int = 999
+    SRV_MIN_CLIENT_YEAR: int = 2022
     MAPS_DIRECTORY: str = "/home/realistikosu/ussr/.data/maps/"
 
 
