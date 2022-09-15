@@ -1,5 +1,4 @@
 import datetime
-import gzip
 import sys
 import traceback
 
@@ -180,7 +179,10 @@ class handler(requestsManager.asyncRequestHandler):
             except exceptions.tokenNotFoundException:
                 # Token not found. Get the user to be reconnected.
                 responseData = serverPackets.server_restart(1)
-                responseData += serverPackets.notification(f"You don't seem to be logged into {config.SRV_NAME} anymore... This is common during server restarts, trying to log you back in.")
+                responseData += serverPackets.notification(
+                    f"You don't seem to be logged into {config.SRV_NAME} anymore... "
+                    "This is common during server restarts, trying to log you back in."
+                )
                 log.warning("Received unknown token! This is normal during server restarts. Reconnecting them.")
             finally:
                 # Unlock token
@@ -196,12 +198,8 @@ class handler(requestsManager.asyncRequestHandler):
         # Send server's response to client
         # We don't use token object because we might not have a token (failed login)
 
-        # First, write the gzipped response
-        self.write(gzip.compress(responseData, glob.config.GZIP_LEVEL))
 
-        # Then, add gzip headers
-        self.add_header("Vary", "Accept-Encoding")
-        self.add_header("Content-Encoding", "gzip")
+        self.write(responseData)
 
         # Add all the headers AFTER the response has been written
         self.set_status(200)

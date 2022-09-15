@@ -21,7 +21,6 @@ class Config:
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     REDIS_PASSWORD: str = ""
-    GZIP_LEVEL: int = 6
     THREADS_COUNT: int = 2
     NEW_RANKED_WEBHOOK: str = ""
     USING_CF: bool = True
