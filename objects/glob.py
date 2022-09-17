@@ -31,7 +31,6 @@ streams = StreamList()
 tokens = TokenList()
 channels = ChannelList()
 matches = MatchList()
-verifiedCache = {}
 cached_passwords: dict = {}
 chatFilters = None
 pool: ThreadPool

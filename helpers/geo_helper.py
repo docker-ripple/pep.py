@@ -284,7 +284,7 @@ def getCountryLetters(code):
     return "XX"
 
 
-def get_full(ip: str) -> tuple:
+def get_full(ip: str) -> tuple[float, float, str]:
     """Fetches the user's full geolocation data and returns the imperative
     info retrieved.
 
@@ -302,7 +302,7 @@ def get_full(ip: str) -> tuple:
     try:
         city = db_reader.city(ip)
 
-        return city.location.latitude, city.location.longitude, city.country.iso_code
+        return city.location.latitude, city.location.longitude, city.country.iso_code  # type: ignore L
 
     except Exception:
-        return 0, 0, "XX"
+        return 0.0, 0.0, "XX"

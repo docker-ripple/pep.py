@@ -83,7 +83,7 @@ def handle(tornadoRequest):
         # Set stuff from single query rather than many userUtils calls.
         user_db = glob.db.fetch(
             "SELECT id, privileges, silence_end, donor_expire, frozen, "
-            "firstloginafterfrozen, freezedate, bypass_hwid FROM users "
+            "firstloginafterfrozen, freezedate, bypass_hwid, country FROM users "
             "WHERE username_safe = %s LIMIT 1",
             (safe_username,),
         )
@@ -112,9 +112,6 @@ def handle(tornadoRequest):
         # Make sure we are not banned or locked
         if (not priv & 3 > 0) and (not priv & privileges.USER_PENDING_VERIFICATION):
             log.error(f"Login failed for user {username} (user is banned)!")
-            responseData += serverPackets.notification(
-                f"{config.SRV_NAME}: You have been banned!",
-            )
             raise exceptions.loginBannedException()
 
         # Verify this user (if pending activation)
@@ -127,12 +124,10 @@ def handle(tornadoRequest):
             if userUtils.verifyUser(userID, clientData):
                 # Valid account
                 log.info(f"Account {userID} verified successfully!")
-                glob.verifiedCache[str(userID)] = 1
                 firstLogin = True
             else:
                 # Multiaccount detected
                 log.info(f"Account {userID} NOT verified!")
-                glob.verifiedCache[str(userID)] = 0
                 raise exceptions.loginBannedException()
 
         # Check restricted mode (and eventually send message)
@@ -413,7 +408,7 @@ def handle(tornadoRequest):
         responseToken.country = country
 
         # Set country in db if user has no country (first bancho login)
-        if get_country(userID) == "XX":
+        if user_db["country"] == "XX":
             set_country(userID, countryLetters)
 
         # Send to everyone our userpanel if we are not restricted or tournament
@@ -483,7 +478,6 @@ def handle(tornadoRequest):
         # Using oldoldold client, we don't have client data. Force update.
         # (we don't use enqueue because we don't have a token since login has failed)
         responseData += serverPackets.force_update()
-        responseData += serverPackets.notification("What...")
     except Exception:
         log.error(
             "Unknown error!\n```\n{}\n{}```".format(
@@ -497,14 +491,5 @@ def handle(tornadoRequest):
             "in! Please notify the developers for help.",
         )
     finally:
-        # Console and discord log
-        if len(loginData) < 3:
-            log.info(
-                "Invalid bancho login request from **{}** (insufficient POST data)".format(
-                    requestIP,
-                ),
-                "bunker",
-            )
-
         # Return token string and data
         return responseTokenString, bytes(responseData)
