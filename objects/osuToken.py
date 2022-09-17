@@ -3,13 +3,14 @@ from __future__ import annotations
 import threading
 import time
 import uuid
+from typing import Optional
 from typing import TYPE_CHECKING
 
 from common.constants import actions
 from common.constants import gameModes
 from common.constants import privileges
 from common.ripple import userUtils
-
+from config import config
 from constants import exceptions
 from constants import serverPackets
 from constants.rosuprivs import ADMIN_PRIVS
@@ -36,7 +37,7 @@ class UserToken:
         Create a token object and set userID and token
 
         :param userID: user associated to this token
-        :param token_: 	if passed, set token to that value
+        :param token_:     if passed, set token to that value
                                         if not passed, token will be generated
         :param ip: client ip. optional.
         :param irc: if True, set this token as IRC client. Default: False.
@@ -164,7 +165,7 @@ class UserToken:
         """
 
         # Stop queuing stuff to the bot so we dont run out of mem
-        if self.userID == 999:
+        if self.userID == config.SRV_BOT_ID:
             return
 
         with self._bufferLock:
@@ -473,15 +474,19 @@ class UserToken:
         # Logout event
         logoutEvent.handle(self, deleteToken=self.irc)
 
-    def silence(self, seconds=None, reason="", author=999):
+    def silence(self, seconds=None, reason="", author: Optional[int] = None):
         """
         Silences this user (db, packet and token)
 
         :param seconds: silence length in seconds. If None, get it from db. Default: None
         :param reason: silence reason. Default: empty string
-        :param author: userID of who has silenced the user. Default: 999 (Your Bot Name lol)
+        :param author: userID of who has silenced the user. Default: the configured bot ID.
         :return:
         """
+
+        if author is None:
+            author = config.SRV_BOT_ID
+
         if seconds is None:
             # Get silence expire from db if needed
             seconds = max(0, userUtils.getSilenceEnd(self.userID) - int(time.time()))
@@ -606,7 +611,7 @@ class UserToken:
         chat.sendMessage(
             glob.BOT_NAME,
             self.username,
-            "Your account has been restricted! Please contact the RealistikOsu staff through our Discord server for more info!",
+            f"Your account has been restricted! Please contact the {config.SRV_NAME} staff through our Discord server for more info!",
         )
 
     def notify_unrestricted(self) -> None:

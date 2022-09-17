@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from helpers import chatHelper as chat
 from logger import log
-from objects import channel
 from objects import glob
+from objects.channel import Channel
 
 
 class ChannelList:
     def __init__(self):
-        self.channels = {}
+        self.channels: dict[str, Channel] = {}
 
     def loadChannels(self):
         """
@@ -27,13 +29,13 @@ class ChannelList:
 
     def addChannel(
         self,
-        name,
-        description,
-        publicRead,
-        publicWrite,
-        temp=False,
-        hidden=False,
-    ):
+        name: str,
+        description: str,
+        publicRead: bool,
+        publicWrite: bool,
+        temp: bool = False,
+        hidden: bool = False,
+    ) -> None:
         """
         Add a channel to channels list
 
@@ -46,7 +48,7 @@ class ChannelList:
         :return:
         """
         glob.streams.add(f"chat/{name}")
-        self.channels[name] = channel.Channel(
+        self.channels[name] = Channel(
             name,
             description,
             publicRead,
@@ -56,35 +58,41 @@ class ChannelList:
         )
         log.info(f"Created channel {name}")
 
-    def addTempChannel(self, name):
+    def addTempChannel(self, name: str) -> Optional[Channel]:
         """
         Add a temporary channel (like #spectator or #multiplayer), gets deleted when there's no one in the channel
         and it's hidden in channels list
 
         :param name: channel name
-        :return: True if the channel was created, otherwise False
+        :return: Channel object if created, else None
         """
         if name in self.channels:
-            return False
+            return None
         glob.streams.add(f"chat/{name}")
-        self.channels[name] = channel.Channel(name, "Chat", True, True, True, True)
+        chan = Channel(name, "Chat", True, True, True, True)
+        self.channels[name] = chan
         log.info(f"Created temp channel {name}")
 
-    def addHiddenChannel(self, name):
+        return chan
+
+    def addHiddenChannel(self, name: str) -> Optional[Channel]:
         """
         Add a hidden channel. It's like a normal channel and must be deleted manually,
         but it's not shown in channels list.
 
         :param name: channel name
-        :return: True if the channel was created, otherwise False
+        :return: Channel object if created, else None
         """
         if name in self.channels:
-            return False
+            return None
         glob.streams.add(f"chat/{name}")
-        self.channels[name] = channel.Channel(name, "Chat", True, True, False, True)
+        chan = Channel(name, "Chat", True, True, False, True)
+        self.channels[name] = chan
         log.info(f"Created hidden channel {name}")
 
-    def removeChannel(self, name):
+        return chan
+
+    def removeChannel(self, name: str) -> None:
         """
         Removes a channel from channels list
 

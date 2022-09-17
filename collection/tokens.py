@@ -5,8 +5,9 @@ import time
 from typing import Optional
 
 import redis
-from common.ripple import userUtils
 
+from common.ripple import userUtils
+from config import config
 from constants import serverPackets
 from constants.exceptions import periodicLoopException
 from events import logoutEvent
@@ -104,7 +105,7 @@ class TokenList:
         Get an osuToken object from an username
 
         :param username: normal username or safe username
-        :param safe: 	if True, username is a safe username,
+        :param safe:     if True, username is a safe username,
                                         compare it with token's safe username rather than normal username
         :return: osuToken object or None
         """
@@ -168,7 +169,7 @@ class TokenList:
                 # Check timeout (fokabot is ignored)
                 if (
                     value.pingTime < timeoutLimit
-                    and value.userID != 999
+                    and value.userID != config.SRV_BOT_ID
                     and not value.irc
                     and not value.tournament
                 ):
@@ -185,8 +186,7 @@ class TokenList:
                     except Exception as e:
                         exceptions.append(e)
                         log.error(
-                            "Something wrong happened while disconnecting a timed out client. Reporting to Sentry "
-                            "when the loop ends.",
+                            "Something wrong happened while disconnecting a timed out client.",
                         )
 
             # Re-raise exceptions if needed

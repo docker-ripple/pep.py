@@ -8,7 +8,8 @@ from datetime import datetime
 
 from common.constants import privileges
 from common.ripple import userUtils
-
+from common.ripple.userUtils import restrict_with_log
+from config import config
 from constants import exceptions
 from constants import serverPackets
 from helpers import chatHelper as chat
@@ -16,31 +17,27 @@ from helpers import geo_helper
 from helpers.geo_helper import get_full
 from helpers.realistik_stuff import Timer
 from helpers.user_helper import get_country
-from helpers.user_helper import insert_ban_log
-from helpers.user_helper import restrict_with_log
 from helpers.user_helper import set_country
 from helpers.user_helper import verify_password
 from logger import log
 from objects import glob
 
-MINIMUM_CLIENT_YEAR = 2022
-
 UNFREEZE_NOTIF = serverPackets.notification(
     "Thank you for providing a liveplay! You have proven your legitemacy and "
-    "have subsequently been unfrozen. Have fun playing RealistikOsu!",
+    f"have subsequently been unfrozen. Have fun playing {config.SRV_NAME}!",
 )
 FREEZE_RES_NOTIF = serverPackets.notification(
     "Your window for liveplay sumbission has expired! Your account has been "
     "restricted as per our cheating policy. Please contact staff for more "
-    "information on what can be done. This can be done via the RealistikCentral Discord server.",
+    f"information on what can be done. This can be done via the {config.SRV_NAME} Discord server.",
 )
 FALLBACK_NOTIF = serverPackets.notification(
-    "Fallback clients are not supported by RealistikOsu. This is due to a combination of missing features "
-    "and server security. Please use a modern build of osu! to play RealistikOsu.",
+    f"Fallback clients are not supported by {config.SRV_NAME}. This is due to a combination of missing features "
+    f"and server security. Please use a modern build of osu! to play {config.SRV_NAME}.",
 )
 OLD_CLIENT_NOTIF = serverPackets.notification(
-    f"You are using an outdated client (minimum release year {MINIMUM_CLIENT_YEAR}). "
-    "Please update your client to the latest version to play RealistikOsu.",
+    f"You are using an outdated client (minimum release year {config.SRV_MIN_CLIENT_YEAR}). "
+    f"Please update your client to the latest version to play {config.SRV_NAME}.",
 )
 
 
@@ -86,7 +83,7 @@ def handle(tornadoRequest):
         # Set stuff from single query rather than many userUtils calls.
         user_db = glob.db.fetch(
             "SELECT id, privileges, silence_end, donor_expire, frozen, "
-            "firstloginafterfrozen, freezedate FROM users "
+            "firstloginafterfrozen, freezedate, bypass_hwid, country FROM users "
             "WHERE username_safe = %s LIMIT 1",
             (safe_username,),
         )
@@ -95,7 +92,7 @@ def handle(tornadoRequest):
             # Invalid username
             log.error(f"Login failed for user {username} (user not found)!")
             responseData += serverPackets.notification(
-                "RealistikOsu: This user does not exist!",
+                f"{config.SRV_NAME}: This user does not exist!",
             )
             raise exceptions.loginFailedException()
 
@@ -108,44 +105,45 @@ def handle(tornadoRequest):
             # Invalid password
             log.error(f"Login failed for user {username} (invalid password)!")
             responseData += serverPackets.notification(
-                "RealistikOsu: Invalid password!",
+                f"{config.SRV_NAME}: Invalid password!",
             )
             raise exceptions.loginFailedException()
 
         # Make sure we are not banned or locked
         if (not priv & 3 > 0) and (not priv & privileges.USER_PENDING_VERIFICATION):
             log.error(f"Login failed for user {username} (user is banned)!")
-            responseData += serverPackets.notification(
-                "RealistikOsu: You have been banned!",
-            )
             raise exceptions.loginBannedException()
-
-        # No login errors!
-        log.info(f"DB stuff and password verification done at {t.end_time_str()}")
 
         # Verify this user (if pending activation)
         firstLogin = False
         if (
-            priv & privileges.USER_PENDING_VERIFICATION
-            or not userUtils.hasVerifiedHardware(userID)
+            priv
+            & privileges.USER_PENDING_VERIFICATION
+            # or not userUtils.hasVerifiedHardware(userID)
         ):
             if userUtils.verifyUser(userID, clientData):
                 # Valid account
                 log.info(f"Account {userID} verified successfully!")
-                glob.verifiedCache[str(userID)] = 1
                 firstLogin = True
             else:
                 # Multiaccount detected
                 log.info(f"Account {userID} NOT verified!")
-                glob.verifiedCache[str(userID)] = 0
                 raise exceptions.loginBannedException()
+
+        # Check restricted mode (and eventually send message)
+        # Cache this for less db queries
+        user_restricted = (priv & privileges.USER_NORMAL) and not (
+            priv & privileges.USER_PUBLIC
+        )
 
         # Save HWID in db for multiaccount detection
         hwAllowed = userUtils.logHardware(
-            userID,
-            clientData,
-            firstLogin,
-        )  # THIS IS SO SLOW
+            user_id=userID,
+            hashes=clientData,
+            is_restricted=user_restricted,
+            activation=firstLogin,
+            bypass_restrict=user_db["bypass_hwid"],
+        )
 
         # This is false only if HWID is empty
         # if HWID is banned, we get restricted so there's no
@@ -161,7 +159,6 @@ def handle(tornadoRequest):
             "UPDATE users SET osuver = %s WHERE id = %s LIMIT 1",
             [osuVersion, userID],
         )
-        log.info(f"Finished hardware and logging IP at {t.end_time_str()}")
 
         # Delete old tokens for that user and generate a new one
         isTournament = "tourney" in osuVersion
@@ -174,12 +171,6 @@ def handle(tornadoRequest):
             tournament=isTournament,
         )
         responseTokenString = responseToken.token
-
-        # Check restricted mode (and eventually send message)
-        # Cache this for less db queries
-        user_restricted = (priv & privileges.USER_NORMAL) and not (
-            priv & privileges.USER_PUBLIC
-        )
 
         if user_restricted:
             responseToken.notify_restricted()
@@ -195,7 +186,10 @@ def handle(tornadoRequest):
         if frozen and not passed:
             responseToken.enqueue(
                 serverPackets.notification(
-                    f"The RealistikOsu staff team has found you suspicious and would like to request a liveplay. You have until {readabledate} (UTC) to provide a liveplay to the staff team. This can be done via the RealistikCentral Discord server. Failure to provide a valid liveplay will result in your account being automatically restricted.",
+                    f"The {config.SRV_NAME} staff team has found you suspicious and would like to request a liveplay. "
+                    f"You have until {readabledate} (UTC) to provide a liveplay to the staff team. This can be done via "
+                    f"the {config.SRV_NAME} Discord server. Failure to provide a valid liveplay will result in your account "
+                    "being automatically restricted.",
                 ),
             )
         elif frozen and passed:
@@ -222,9 +216,10 @@ def handle(tornadoRequest):
                 )
                 responseToken.enqueue(
                     serverPackets.notification(
-                        "Your supporter status expires in {}! Following this, you will lose your supporter privileges (such as the further profile customisation options, name changes or profile wipes) and will not be able to access supporter features. If you wish to keep supporting RealistikOsu and you don't want to lose your donor privileges, you can donate again by clicking on 'Donate' on our website.".format(
-                            expireIn,
-                        ),
+                        f"Your supporter status expires in {expireIn}! Following this, you will lose your supporter privileges "
+                        "(such as the further profile customisation options, name changes or profile wipes) and will not "
+                        f"be able to access supporter features. If you wish to keep supporting {config.SRV_NAME} and you "
+                        "don't want to lose your donor privileges, you can donate again by clicking on 'Donate' on our website.",
                     ),
                 )
 
@@ -257,8 +252,6 @@ def handle(tornadoRequest):
                         "Bancho is in maintenance mode. Only mods/admins have full access to the server.\nType !system maintenance off in chat to turn off maintenance mode.",
                     ),
                 )
-
-        log.info(f"Donor, silence and maintenence checks at {t.end_time_str()}")
 
         # BAN CUSTOM CHEAT CLIENTS
         # 0Ainu = First Ainu build
@@ -361,12 +354,10 @@ def handle(tornadoRequest):
             raise exceptions.loginFailedException
 
         # Misc outdated client check
-        elif int(osuVersion[1:5]) < MINIMUM_CLIENT_YEAR:
+        elif int(osuVersion[1:5]) < config.SRV_MIN_CLIENT_YEAR:
             glob.tokens.deleteToken(userID)
             responseData += OLD_CLIENT_NOTIF
             raise exceptions.loginFailedException
-
-        log.info(f"Anticheat checks at {t.end_time_str()}")
 
         # Send all needed login packets
         responseToken.enqueue(
@@ -406,8 +397,6 @@ def handle(tornadoRequest):
                 if not token.restricted:
                     responseToken.enqueue(serverPackets.user_presence(token.userID))
 
-        log.info(f"Server state and chat {t.end_time_str()}")
-
         # Localise the user based off IP.
         # Get location and country from IP
         latitude, longitude, countryLetters = get_full(requestIP)
@@ -419,16 +408,17 @@ def handle(tornadoRequest):
         responseToken.country = country
 
         # Set country in db if user has no country (first bancho login)
-        if get_country(userID) == "XX":
+        if user_db["country"] == "XX":
             set_country(userID, countryLetters)
 
         # Send to everyone our userpanel if we are not restricted or tournament
         if not responseToken.restricted:
             glob.streams.broadcast("main", serverPackets.user_presence(userID))
 
-        # creating notification
+        # TODO: Make quotes database based.
         t_str = t.end_time_str()
         online_users = len(glob.tokens.tokens)
+
         # Wylie has his own quote he gets to enjoy only himself lmfao. UPDATE: Electro gets it too.
         if userID in (4674, 3277):
             quote = "I lost an S because I saw her lewd"
@@ -438,7 +428,7 @@ def handle(tornadoRequest):
         # Me and relesto are getting one as well lmao. UPDATE: Sky and Aochi gets it too lmao.
         elif userID in (1000, 1180, 3452, 4812):
             quote = (
-                f"Hello I'm RealistikBot! The server's official bot to assist you, "
+                f"Hello I'm {config.SRV_BOT_NAME}! The server's official bot to assist you, "
                 "if you want to know what I can do just type !help"
             )
         else:
@@ -463,9 +453,6 @@ def handle(tornadoRequest):
     except exceptions.loginBannedException:
         # Login banned error packet
         responseData += serverPackets.login_banned()
-    except exceptions.loginLockedException:
-        # Login banned error packet
-        responseData += serverPackets.login_locked()
     except exceptions.loginCheatClientsException:
         # Banned for logging in with cheats
         responseData += serverPackets.login_cheats()
@@ -491,7 +478,6 @@ def handle(tornadoRequest):
         # Using oldoldold client, we don't have client data. Force update.
         # (we don't use enqueue because we don't have a token since login has failed)
         responseData += serverPackets.force_update()
-        responseData += serverPackets.notification("What...")
     except Exception:
         log.error(
             "Unknown error!\n```\n{}\n{}```".format(
@@ -501,18 +487,9 @@ def handle(tornadoRequest):
         )
         responseData += serverPackets.login_reply(-5)  # Bancho error
         responseData += serverPackets.notification(
-            "RealistikOsu: The server has experienced an error while logging you "
+            f"{config.SRV_NAME}: The server has experienced an error while logging you "
             "in! Please notify the developers for help.",
         )
     finally:
-        # Console and discord log
-        if len(loginData) < 3:
-            log.info(
-                "Invalid bancho login request from **{}** (insufficient POST data)".format(
-                    requestIP,
-                ),
-                "bunker",
-            )
-
         # Return token string and data
         return responseTokenString, bytes(responseData)

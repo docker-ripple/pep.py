@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from common.constants import mods
-
 from constants import clientPackets
 from constants import matchModModes
 from objects import glob

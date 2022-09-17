@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from common.constants import mods
-
 from constants import clientPackets
 from constants import serverPackets
 from logger import log
@@ -15,12 +14,12 @@ def handle(userToken, packetData):
 
     # Make sure we are not banned
     # if userUtils.isBanned(userID):
-    # 	userToken.enqueue(serverPackets.login_banned())
-    # 	return
+    #     userToken.enqueue(serverPackets.login_banned())
+    #     return
 
     # Send restricted message if needed
     # if userToken.restricted:
-    # 	userToken.checkRestricted(True)
+    #     userToken.checkRestricted(True)
 
     # Change action packet
     packetData = clientPackets.userActionChange(packetData)
@@ -28,12 +27,12 @@ def handle(userToken, packetData):
     # If we are not in spectate status but we're spectating someone, stop spectating
     """
 if userToken.spectating != 0 and userToken.actionID != actions.WATCHING and userToken.actionID != actions.IDLE and userToken.actionID != actions.AFK:
-	userToken.stopSpectating()
+    userToken.stopSpectating()
 
 # If we are not in multiplayer but we are in a match, part match
 if userToken.matchID != -1 and userToken.actionID != actions.MULTIPLAYING and userToken.actionID != actions.MULTIPLAYER and userToken.actionID != actions.AFK:
-	userToken.partMatch()
-		"""
+    userToken.partMatch()
+        """
 
     # Update cached stats if our pp changed if we've just submitted a score or we've changed gameMode
     # if (userToken.actionID == actions.PLAYING or userToken.actionID == actions.MULTIPLAYING) or (userToken.pp != userUtils.getPP(userID, userToken.gameMode)) or (userToken.gameMode != packetData["gameMode"]):

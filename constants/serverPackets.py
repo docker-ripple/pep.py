@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from common.constants import privileges
 from common.ripple import userUtils
-
+from config import config
 from constants import dataTypes
 from constants import packetIDs
 from constants import userRanks
@@ -28,20 +28,22 @@ def force_update():
     return b"\x05\x00\x00\x04\x00\x00\x00\xfe\xff\xff\xff"
 
 
-def login_banned():
-    return b"\x05\x00\x00\x04\x00\x00\x00\xff\xff\xff\xff\x18\x00\x00@\x00\x00\x00\x0b>You are banned! Please contact us on Discord (link at ussr.pl)"
-
-
-def login_locked():
-    return b"\x05\x00\x00\x04\x00\x00\x00\xff\xff\xff\xff\x18\x00\x00A\x00\x00\x00\x0b?Well... Your account is locked but all your data is still safe."
+def login_banned() -> bytes:
+    return login_reply(-1) + notification(
+        f"Your account has been banned from {config.SRV_NAME}! "
+        "Please contact a member of staff for more information.",
+    )
 
 
 def login_error():
     return b"\x05\x00\x00\x04\x00\x00\x00\xfb\xff\xff\xff"
 
 
-def login_cheats():
-    return b"\x18\x00\x00L\x00\x00\x00\x0bJWe don't like cheaters here at RealistikOsu! Consider yourself restricted.\x05\x00\x00\x04\x00\x00\x00\xff\xff\xff\xff"
+def login_cheats() -> bytes:
+    return login_reply(-1) + notification(
+        f"Your account has been restricted from {config.SRV_NAME}! "
+        "Please contact a member of staff for more information.",
+    )
 
 
 def verification_required():
@@ -51,8 +53,11 @@ def verification_required():
 """ Login packets """
 
 
-def login_reply(uid):
-    return packetHelper.buildPacket(packetIDs.server_userID, ((uid, dataTypes.SINT32),))
+def login_reply(user_id: int) -> bytes:
+    return packetHelper.buildPacket(
+        packetIDs.server_userID,
+        ((user_id, dataTypes.SINT32),),
+    )
 
 
 def silence_end_notify(seconds):

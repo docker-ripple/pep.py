@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from config import config
 from constants import exceptions
 from objects import glob
 
@@ -27,7 +28,7 @@ class Channel:
         self.hidden = hidden
 
         # Make Foka join the channel
-        fokaToken = glob.tokens.getTokenFromUserID(999)
+        fokaToken = glob.tokens.getTokenFromUserID(config.SRV_BOT_ID)
         if fokaToken is not None:
             try:
                 fokaToken.joinChannel(self)

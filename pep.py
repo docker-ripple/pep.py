@@ -10,18 +10,13 @@ import tornado.gen
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
+
 from common.db import dbConnector
 from common.redis import pubSub
-
-from handlers import api_delta as deltaApi
+from handlers import api_status
 from handlers import apiAerisThing
-from handlers import apiFokabotMessageHandler
-from handlers import apiIsOnlineHandler
 from handlers import apiOnlineUsersHandler
 from handlers import apiServerStatusHandler
-from handlers import apiUserStatusHandler
-from handlers import apiVerifiedStatusHandler
-from handlers import ciTriggerHandler
 from handlers import mainHandler
 from helpers import consoleHelper
 from helpers import systemHelper as system
@@ -46,14 +41,9 @@ def make_app():
     return tornado.web.Application(
         [
             (r"/", mainHandler.handler),
-            (r"/api/v1/isOnline", apiIsOnlineHandler.handler),
             (r"/api/v1/onlineUsers", apiOnlineUsersHandler.handler),
             (r"/api/v1/serverStatus", apiServerStatusHandler.handler),
-            (r"/api/v1/ciTrigger", ciTriggerHandler.handler),
-            (r"/api/v1/verifiedStatus", apiVerifiedStatusHandler.handler),
-            (r"/api/v1/fokabotMessage", apiFokabotMessageHandler.handler),
-            (r"/api/yes/userstats", apiUserStatusHandler.handler),
-            (r"/api/v2/clients/(.*)", deltaApi.handler),
+            (r"/api/status/(.*)", api_status.handler),
             (r"/infos", apiAerisThing.handler),
         ],
     )
@@ -76,7 +66,7 @@ def main():
         # Connect to db and redis
         try:
             log.info("Connecting to MySQL database... ")
-            glob.db = dbConnector.db(
+            glob.db = dbConnector.DatabasePool(
                 glob.config.DB_HOST,
                 glob.config.DB_USERNAME,
                 glob.config.DB_PASSWORD,

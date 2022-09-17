@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from common.redis import generalPubSubHandler
-
 from helpers import chatHelper
 from objects import glob
 
