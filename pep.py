@@ -44,6 +44,7 @@ def make_app():
             (r"/api/v1/onlineUsers", apiOnlineUsersHandler.handler),
             (r"/api/v1/serverStatus", apiServerStatusHandler.handler),
             (r"/api/status/(.*)", api_status.handler),
+            (r"/api/v2/status/(.*)", api_status.handler),
             (r"/infos", apiAerisThing.handler),
         ],
     )

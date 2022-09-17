@@ -56,7 +56,9 @@ class asyncRequestHandler(tornado.web.RequestHandler):
 
         :return: Client IP address
         """
-        if not config.USING_CF:
+
+        # Check if they are connecting through a switcher
+        if "ppy.sh" in self.request.headers.get("Host", "") or not config.USING_CF:
             return self.request.headers.get("X-Real-IP")
 
         return self.request.headers.get("CF-Connecting-IP")

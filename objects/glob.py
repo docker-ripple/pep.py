@@ -13,6 +13,7 @@ from collection.streams import StreamList
 from collection.tokens import TokenList
 from common.db.dbConnector import DatabasePool
 from config import config
+from objects.banchoConfig import banchoConfig
 
 if TYPE_CHECKING:
     from helpers.status_helper import StatusManager
@@ -25,7 +26,7 @@ __version__ = "3.1.0"
 application = None
 db: DatabasePool
 redis: Redis
-banchoConf = None
+banchoConf: banchoConfig
 namespace = {}
 streams = StreamList()
 tokens = TokenList()
