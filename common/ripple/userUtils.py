@@ -1828,7 +1828,7 @@ def logHardware(
         else:
             matching_users = glob.db.fetchAll(
                 "SELECT userid FROM hw_user WHERE "
-                "userid != %s AND (mac = %s OR unique_id = %s OR disk_id = %s) LIMIT 1",
+                "userid != %s AND (mac = %s AND unique_id = %s AND disk_id = %s) LIMIT 1",
                 (user_id, hashes[2], hashes[3], hashes[4]),
             )
 
