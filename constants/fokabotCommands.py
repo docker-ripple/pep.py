@@ -321,7 +321,7 @@ def editMap(fro: str, chan: str, message: list[str]) -> str:
     chat.sendMessage(
         glob.BOT_NAME,
         "#announce",
-        f"[https://{config.SRV_DOMAINs}/u/{token.userID} {fro}] has {status_readable} {beatmap_url}",
+        f"[https://{config.SRV_DOMAIN}/u/{token.userID} {fro}] has {status_readable} {beatmap_url}",
     )
     return f"Successfully {status_readable} a map."
 
