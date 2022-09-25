@@ -18,9 +18,7 @@ class handler(requestsManager.asyncRequestHandler):
 
         if not token:
             self.set_status(204)
-            return self.write(
-                json.dumps({"code": 204, "message": "The user is not online."}),
-            )
+            return
 
         return self.write(
             json.dumps(
