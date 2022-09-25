@@ -17,9 +17,9 @@ class handler(requestsManager.asyncRequestHandler):
         token = glob.tokens.getTokenFromUserID(user_id)
 
         if not token:
-            # self.set_status(404) # CF doesn't like this.
+            self.set_status(204)
             return self.write(
-                json.dumps({"code": 404, "message": "The user is not online."}),
+                json.dumps({"code": 204, "message": "The user is not online."}),
             )
 
         return self.write(
