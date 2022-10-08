@@ -248,10 +248,7 @@ cpdef readPacketData(bytes stream, list structure=None, bint hasFirstBytes = Tru
                 end = start+length[0]+length[1]+1
 
                 # Read bytes
-                #data[i[0]] = ''.join(chr(j) for j in stream[start+1+length[1]:end])
-                data[i[0]] = ""
-                for j in stream[start+1+length[1]:end]:
-                    data[i[0]] += chr(j)
+                data[i[0]] = stream[start+1+length[1]:end].decode()
         elif i[1] == dataTypes.BYTE:
             end = start+1
         elif i[1] in (dataTypes.UINT16, dataTypes.SINT16):
