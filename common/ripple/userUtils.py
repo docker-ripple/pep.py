@@ -1818,17 +1818,20 @@ def logHardware(
         return False
 
     if not is_restricted:
+        # Wine users. Only the unique_id is somewhat reliable.
         if hashes[2] == "b4ec3c4334a0249dae95c284ec5983df":
             matching_users = glob.db.fetchAll(
-                "SELECT userid FROM hw_user WHERE "
-                "userid != %s AND unique_id = %s LIMIT 1",
+                "SELECT u.id AS userid, u.username AS username FROM hw_user h WHERE "
+                "h.userid != %s AND h.unique_id = %s"
+                "INNER JOIN users u ON h.userid = u.id",
                 (user_id, hashes[3]),
             )
 
         else:
             matching_users = glob.db.fetchAll(
-                "SELECT userid FROM hw_user WHERE "
-                "userid != %s AND (mac = %s AND unique_id = %s AND disk_id = %s) LIMIT 1",
+                "SELECT u.id AS userid, u.username AS username FROM hw_user h WHERE "
+                "h.userid != %s AND (h.mac = %s AND h.unique_id = %s AND h.disk_id = %s) "
+                "INNER JOIN users u ON h.userid = u.id",
                 (user_id, hashes[2], hashes[3], hashes[4]),
             )
 
@@ -1839,12 +1842,33 @@ def logHardware(
             )
 
             if not bypass_restrict:
+                # Detect the earliest account ID to restrict, ban rest
+                earliest_user = min(matching_users, key=lambda x: x["userid"])
+                matching_str = ", ".join(
+                    f"{i['username']} ({i['userid']})"
+                    for i in matching_users
+                    if i["userid"] != earliest_user["userid"]
+                )
+
                 restrict_with_log(
-                    user_id,
+                    earliest_user["userid"],
                     "HWID Match with another user.",
-                    f"The sent hwids ({hashes!r}) have matched with the following users: {matching_users!r}. "
+                    f"The sent hwids ({hashes!r}) have matched with the following users: {matching_str}. "
                     "This implies that they are likely to be using a multiaccount.",
                 )
+
+                matching_users.remove(earliest_user)
+
+                # Ban the multiaccounts.
+                for user in matching_users:
+                    ban_with_log(
+                        user["userid"],
+                        "Multiaccount detected by HWID match.",
+                        f"The sent hwids ({hashes!r}) which exactly matched with an earlier account: "
+                        f"{earliest_user['username']} ({earliest_user['userid']}). "
+                        "This implies that they are likely to be using a multiaccount. As a result, this "
+                        "account has been banned, while the earlier account has been restricted.",
+                    )
 
     # Update hash set occurencies
     glob.db.execute(
@@ -2286,6 +2310,39 @@ def restrict_with_log(
 
     glob.db.execute(
         f"UPDATE users SET privileges = privileges & ~{privileges.USER_PUBLIC}, "
+        "ban_datetime = UNIX_TIMESTAMP() WHERE id = %s LIMIT 1",
+        (user_id,),
+    )
+    glob.redis.publish("peppy:ban", user_id)
+    removeFromLeaderboard(user_id)
+
+    insert_ban_log(user_id, summary, detail, prefix, from_id)
+
+
+def ban_with_log(
+    user_id: int,
+    summary: str,
+    detail: str,
+    prefix: bool = True,
+    from_id: Optional[int] = None,
+) -> None:
+    """Bans the user alongside inserting a log into the database.
+
+    Args:
+        user_id (int): The ID of the user to assign the log to.
+        summary (str): A short description of the reason.
+        detail (str): A more detailed, in-depth description of the reason.
+        prefix (bool, optional): Whether the detail should be prefixed by
+            the peppy signature. Defaults to True.
+        from_id (int, optional): The ID of the user who banned the user.
+            Defaults to the configured bot.
+    """
+
+    if from_id is None:
+        from_id = config.SRV_BOT_ID
+
+    glob.db.execute(
+        f"UPDATE users SET privileges = 0, "
         "ban_datetime = UNIX_TIMESTAMP() WHERE id = %s LIMIT 1",
         (user_id,),
     )
