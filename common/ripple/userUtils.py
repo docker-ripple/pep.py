@@ -1821,17 +1821,15 @@ def logHardware(
         # Wine users. Only the unique_id is somewhat reliable.
         if hashes[2] == "b4ec3c4334a0249dae95c284ec5983df":
             matching_users = glob.db.fetchAll(
-                "SELECT u.id AS userid, u.username AS username FROM hw_user h WHERE "
-                "h.userid != %s AND h.unique_id = %s"
-                "INNER JOIN users u ON h.userid = u.id",
+                "SELECT u.id AS userid, u.username AS username FROM hw_user h INNER JOIN users u ON h.userid = u.id "
+                "WHERE h.userid != %s AND h.unique_id = %s",
                 (user_id, hashes[3]),
             )
 
         else:
             matching_users = glob.db.fetchAll(
-                "SELECT u.id AS userid, u.username AS username FROM hw_user h WHERE "
-                "h.userid != %s AND (h.mac = %s AND h.unique_id = %s AND h.disk_id = %s) "
-                "INNER JOIN users u ON h.userid = u.id",
+                "SELECT u.id AS userid, u.username AS username FROM hw_user h INNER JOIN users u ON h.userid = u.id "
+                "WHERE h.userid != %s AND (h.mac = %s AND h.unique_id = %s AND h.disk_id = %s) ",
                 (user_id, hashes[2], hashes[3], hashes[4]),
             )
 
