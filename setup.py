@@ -1,20 +1,17 @@
-"""Cython build file"""
 from __future__ import annotations
 
-import os
-
+from setuptools import Extension, setup
 from Cython.Build import cythonize
-from distutils.core import setup
-from distutils.extension import Extension
 
-cythonExt = []
-for root, dirs, files in os.walk(os.getcwd()):
-    for file in files:
-        if file.endswith(".pyx") and ".pyenv" not in root:  # im sorry
-            filePath = os.path.relpath(os.path.join(root, file))
-            cythonExt.append(Extension(filePath.replace("/", ".")[:-4], [filePath]))
+# List of Cython modules to build
+cython_modules = [
+    Extension("handlers.mainHandler", ["handlers/mainHandler.pyx"]),
+    Extension("helpers.packetHelper", ["helpers/packetHelper.pyx"]),
+]
 
+# Build the Cython modules
 setup(
-    name="pep.pyx modules",
-    ext_modules=cythonize(cythonExt, nthreads=4),
+    name="pep.py Cython modules",
+    ext_modules=cythonize(cython_modules, nthreads=4),
 )
+
