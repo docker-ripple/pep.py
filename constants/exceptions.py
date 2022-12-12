@@ -151,3 +151,7 @@ class wrongChannelException(Exception):
 
 class periodicLoopException(Exception):
     pass
+
+
+class botAccountException(Exception):
+    pass
