@@ -1869,13 +1869,19 @@ def logHardware(
                     )
 
     # Update hash set occurencies
-    glob.db.execute(
-        """
-            INSERT INTO hw_user (id, userid, mac, unique_id, disk_id, occurencies) VALUES (NULL, %s, %s, %s, %s, 1)
-            ON DUPLICATE KEY UPDATE occurencies = occurencies + 1
-        """,
-        [user_id, hashes[2], hashes[3], hashes[4]],
-    )
+    # Our database doesnt have any fancy keys.
+    exists = glob.db.fetch("SELECT id FROM hw_user WHERE userid = %s AND mac = %s AND unique_id = %s AND disk_id = %s", (
+        user_id, hashes[2], hashes[3], hashes[4],
+    ))
+    if exists:
+        glob.db.execute("UPDATE hw_user SET occurencies = occurencies + 1 WHERE id = %s LIMIT 1", (exists["id"],))
+    else:
+        glob.db.execute(
+            """
+                INSERT INTO hw_user (id, userid, mac, unique_id, disk_id, occurencies) VALUES (NULL, %s, %s, %s, %s, 1)
+            """,
+            [user_id, hashes[2], hashes[3], hashes[4]],
+        )
 
     # Optionally, set this hash as 'used for activation'
     if activation:

@@ -488,7 +488,7 @@ def handle(tornadoRequest):
         # (we don't use enqueue because we don't have a token since login has failed)
         responseData += serverPackets.force_update()
     except exceptions.botAccountException:
-        return "no", BOT_ACCOUNT_RESPONSE
+        return "no", BOT_ACCOUNT_RESPONSE + serverPackets.login_failed()
     except Exception:
         log.error(
             "Unknown error!\n```\n{}\n{}```".format(
