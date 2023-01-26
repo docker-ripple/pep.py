@@ -1821,14 +1821,14 @@ def logHardware(
         # Wine users. Only the unique_id is somewhat reliable.
         if hashes[2] == "b4ec3c4334a0249dae95c284ec5983df":
             matching_users = glob.db.fetchAll(
-                "SELECT u.id AS userid, u.username AS username FROM hw_user h INNER JOIN users u ON h.userid = u.id "
+                "SELECT DISTINCT u.id AS userid, u.username AS username FROM hw_user h INNER JOIN users u ON h.userid = u.id "
                 "WHERE h.userid != %s AND h.unique_id = %s",
                 (user_id, hashes[3]),
             )
 
         else:
             matching_users = glob.db.fetchAll(
-                "SELECT u.id AS userid, u.username AS username FROM hw_user h INNER JOIN users u ON h.userid = u.id "
+                "SELECT DISTINCT u.id AS userid, u.username AS username FROM hw_user h INNER JOIN users u ON h.userid = u.id "
                 "WHERE h.userid != %s AND (h.mac = %s AND h.unique_id = %s AND h.disk_id = %s) ",
                 (user_id, hashes[2], hashes[3], hashes[4]),
             )
@@ -1842,10 +1842,9 @@ def logHardware(
             if not bypass_restrict:
                 # Detect the earliest account ID to restrict, ban rest
                 earliest_user = min(matching_users, key=lambda x: x["userid"])
+                matching_users.remove(earliest_user)
                 matching_str = ", ".join(
-                    f"{i['username']} ({i['userid']})"
-                    for i in matching_users
-                    if i["userid"] != earliest_user["userid"]
+                    f"{i['username']} ({i['userid']})" for i in matching_users
                 )
 
                 restrict_with_log(
@@ -1854,8 +1853,6 @@ def logHardware(
                     f"The sent hwids ({hashes!r}) have matched with the following users: {matching_str}. "
                     "This implies that they are likely to be using a multiaccount.",
                 )
-
-                matching_users.remove(earliest_user)
 
                 # Ban the multiaccounts.
                 for user in matching_users:
@@ -1870,11 +1867,20 @@ def logHardware(
 
     # Update hash set occurencies
     # Our database doesnt have any fancy keys.
-    exists = glob.db.fetch("SELECT id FROM hw_user WHERE userid = %s AND mac = %s AND unique_id = %s AND disk_id = %s", (
-        user_id, hashes[2], hashes[3], hashes[4],
-    ))
+    exists = glob.db.fetch(
+        "SELECT id FROM hw_user WHERE userid = %s AND mac = %s AND unique_id = %s AND disk_id = %s",
+        (
+            user_id,
+            hashes[2],
+            hashes[3],
+            hashes[4],
+        ),
+    )
     if exists:
-        glob.db.execute("UPDATE hw_user SET occurencies = occurencies + 1 WHERE id = %s LIMIT 1", (exists["id"],))
+        glob.db.execute(
+            "UPDATE hw_user SET occurencies = occurencies + 1 WHERE id = %s LIMIT 1",
+            (exists["id"],),
+        )
     else:
         glob.db.execute(
             """
