@@ -236,7 +236,6 @@ def handle(tornadoRequest):
         silenceSeconds = responseToken.getSilenceSecondsLeft()
         # Get supporter/GMT
         userGMT = False
-        userSupporter = not user_restricted
         userTournament = False
         userGMT = responseToken.admin
         userTournament = bool(
@@ -373,7 +372,7 @@ def handle(tornadoRequest):
             bytearray(serverPackets.silence_end_notify(silenceSeconds))
             + serverPackets.login_reply(userID)  # Fast addition
             + serverPackets.protocol_version()
-            + serverPackets.bancho_priv(userSupporter, userGMT, userTournament)
+            + serverPackets.bancho_priv(True, userGMT, userTournament)
             + serverPackets.user_presence(userID, True)
             + serverPackets.user_stats(userID)
             + serverPackets.channel_info_end()
