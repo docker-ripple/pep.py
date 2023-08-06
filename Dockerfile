@@ -12,6 +12,6 @@ COPY requirements.txt requirements.txt
 RUN python3.9 -m pip install -r requirements.txt
 
 COPY . .
-RUN make install
+RUN python3.9 -m setup.py build_ext --inplace
 
 CMD python3.9 pep.py
