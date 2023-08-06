@@ -11,7 +11,7 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=$timezone apt-get install -y python3.9-dev
 COPY requirements.txt requirements.txt
 RUN python3.9 -m pip install -r requirements.txt
 
+COPY . .
 RUN make install
 
-COPY . .
 CMD python3.9 pep.py
