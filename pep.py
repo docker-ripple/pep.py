@@ -211,7 +211,7 @@ def main():
         }
 
         # Start tornado
-        glob.application.listen(port=glob.config.PORT, address="127.0.0.1")
+        glob.application.listen(port=glob.config.PORT, address="0.0.0.0")
         tornado.ioloop.IOLoop.instance().start()
     finally:
         system.dispose()
